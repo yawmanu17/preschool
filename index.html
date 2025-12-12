@@ -16,10 +16,7 @@
     }
     .pop { animation: pop 180ms ease-out; }
     @keyframes pop { from { transform: translateY(6px); opacity:.72; } to { transform: translateY(0); opacity:1; } }
-
-    /* Dropdown readability fix */
     select option { color: #0f172a; background: #ffffff; }
-
     ::-webkit-scrollbar { height: 10px; width: 10px; }
     ::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.35); border-radius: 999px; }
     ::-webkit-scrollbar-track { background: rgba(241,245,249,0); }
@@ -63,6 +60,7 @@
 
         <div class="flex items-center gap-2">
           <span id="todayBadge" class="hidden sm:inline text-xs px-3 py-1 rounded-full bg-white/10 border border-white/15 text-white/90"></span>
+          <span id="schoolBadge" class="hidden sm:inline text-xs px-3 py-1 rounded-full bg-white/10 border border-white/15 text-white/90"></span>
           <button id="logoutBtn"
             class="hidden px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
             Logout
@@ -89,6 +87,11 @@
           </div>
 
           <div class="mt-4 space-y-3">
+            <input id="schoolCodeStaff" autocomplete="off"
+              class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                     focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
+              placeholder="School Code (e.g., ABC123)" />
+
             <input id="staffPinInput" type="password" inputmode="numeric"
               class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
                      focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
@@ -107,7 +110,7 @@
         </div>
       </div>
 
-      <!-- Parent login (phone + pin) -->
+      <!-- Parent login -->
       <div class="rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card">
         <div class="p-6">
           <div class="flex items-center justify-between">
@@ -116,6 +119,11 @@
           </div>
 
           <div class="mt-4 space-y-3">
+            <input id="schoolCodeParent" autocomplete="off"
+              class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                     focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
+              placeholder="School Code (e.g., ABC123)" />
+
             <input id="guardianPhoneInput" inputmode="tel"
               class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
                      focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
@@ -469,828 +477,1090 @@
     </div>
   </div>
 
-<script>
-/* ===== Helpers ===== */
-const pad2 = n => String(n).padStart(2,"0");
-const todayKey = () => { const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; };
-const nowLocal = () => { const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`; };
+  <!-- Firebase SDKs (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-const loadJSON = (k,f) => { const r=localStorage.getItem(k); if(!r) return f; try{return JSON.parse(r)}catch{return f} };
-const saveJSON = (k,v) => localStorage.setItem(k, JSON.stringify(v));
-const esc = s => String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
-const escA = s => esc(s).replaceAll("\n"," ");
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyC0vDzgPZllUU_gYU0iIYPiT4OWbj-eYHQ",
+      authDomain: "preschool-a9bb0.firebaseapp.com",
+      projectId: "preschool-a9bb0",
+      storageBucket: "preschool-a9bb0.firebasestorage.app",
+      messagingSenderId: "462699240938",
+      appId: "1:462699240938:web:fad34d16574a062ce42693",
+      measurementId: "G-PEL1T3XE2B"
+    };
 
-const makeId = p => p + "_" + Math.random().toString(16).slice(2) + Date.now().toString(16);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    window.DB = db;
+  </script>
 
-function setStatus(msg, type="info") {
-  statusWrap.classList.remove("hidden");
-  statusMsg.classList.remove("pop"); void statusMsg.offsetWidth; statusMsg.classList.add("pop");
-  const base = "pop rounded-2xl border px-4 py-3 text-sm";
-  const styles = {
-    ok:  "bg-emerald-400/10 border-emerald-200/20 text-emerald-50",
-    err: "bg-rose-400/10 border-rose-200/20 text-rose-50",
-    info:"bg-white/10 border-white/15 text-white/90"
-  };
-  statusMsg.className = `${base} ${styles[type] || styles.info}`;
-  statusMsg.textContent = msg;
-}
+  <script>
+  /* ===========================
+     Helpers
+  =========================== */
+  const pad2 = n => String(n).padStart(2,"0");
+  const todayKey = () => { const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; };
+  const nowLocal = () => { const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`; };
 
-/* ===== Storage Keys ===== */
-const KEY_AUTH       = "APP_AUTH_V3";
-const KEY_SESSION    = "APP_SESSION_V5";     // {schoolName,className,staffName,staffPin}
-const KEY_GUARDIANS  = "APP_GUARDIANS_V3";   // [{id,name,phone,pin}]
-const KEY_CHILDREN   = "APP_CHILDREN_V3";    // [{id,name,guardianIds:[]}]
-const KEY_LOGS_TODAY  = () => `APP_LOGS_${todayKey()}`;
-const KEY_PENDING_TODAY = () => `APP_PENDING_${todayKey()}`;
-const KEY_STAFF_LOCK = "APP_STAFF_LOCK_V1";
-const KEY_LAST_SETUP = "APP_LAST_SETUP_SNAPSHOT"; // snapshot of setup for “Copy Last Setup”
-const KEY_ARCHIVE    = "APP_ARCHIVE_LOGS";   // [{date, logs:[], exportedAt}]
+  const esc = s => String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  const escA = s => esc(s).replaceAll("\n"," ");
+  const makeId = p => p + "_" + Math.random().toString(16).slice(2) + Date.now().toString(16);
 
-/* ===== DOM ===== */
-const todayBadge = document.getElementById("todayBadge");
-todayBadge.textContent = `Today: ${todayKey()}`; todayBadge.classList.remove("hidden");
+  function normalizePhone(p){ return String(p || "").replace(/[^\d]/g, ""); }
+  function gen4Pin(){ return String(Math.floor(1000 + Math.random()*9000)); }
 
-const subTitle = document.getElementById("subTitle");
-const logoutBtn = document.getElementById("logoutBtn");
+  function setStatus(msg, type="info") {
+    statusWrap.classList.remove("hidden");
+    statusMsg.classList.remove("pop"); void statusMsg.offsetWidth; statusMsg.classList.add("pop");
+    const base = "pop rounded-2xl border px-4 py-3 text-sm";
+    const styles = {
+      ok:  "bg-emerald-400/10 border-emerald-200/20 text-emerald-50",
+      err: "bg-rose-400/10 border-rose-200/20 text-rose-50",
+      info:"bg-white/10 border-white/15 text-white/90"
+    };
+    statusMsg.className = `${base} ${styles[type] || styles.info}`;
+    statusMsg.textContent = msg;
+  }
 
-const statusWrap = document.getElementById("statusWrap");
-const statusMsg  = document.getElementById("statusMsg");
+  function safeSetInput(el, value){
+    if(document.activeElement === el) return;
+    el.value = value ?? "";
+  }
 
-const authView   = document.getElementById("authView");
-const staffView  = document.getElementById("staffView");
-const parentView = document.getElementById("parentView");
+  /* ===========================
+     Local-only keys (device)
+  =========================== */
+  const KEY_AUTH = "APP_AUTH_MULTI_V1";               // {role, guardianId}
+  const KEY_ACTIVE_SCHOOL = "APP_SCHOOL_CODE_V1";     // school code
+  const KEY_STAFF_LOCK = "APP_STAFF_LOCK_V1";         // login lock
 
-/* Auth */
-const staffPinInput = document.getElementById("staffPinInput");
-const staffLoginBtn = document.getElementById("staffLoginBtn");
-const staffLockMsg  = document.getElementById("staffLockMsg");
+  const loadJSON = (k,f) => { const r=localStorage.getItem(k); if(!r) return f; try{return JSON.parse(r)}catch{return f} };
+  const saveJSON = (k,v) => localStorage.setItem(k, JSON.stringify(v));
 
-const guardianPhoneInput = document.getElementById("guardianPhoneInput");
-const guardianPinInput   = document.getElementById("guardianPinInput");
-const guardianLoginBtn   = document.getElementById("guardianLoginBtn");
+  /* ===========================
+     DOM
+  =========================== */
+  const todayBadge = document.getElementById("todayBadge");
+  const schoolBadge = document.getElementById("schoolBadge");
+  todayBadge.textContent = `Today: ${todayKey()}`; todayBadge.classList.remove("hidden");
 
-/* Staff */
-const refreshBtn = document.getElementById("refreshBtn");
-const copyLastSetupBtn = document.getElementById("copyLastSetupBtn");
-const exportPdfBtn = document.getElementById("exportPdfBtn");
-const exportCsvBtn = document.getElementById("exportCsvBtn");
+  const subTitle = document.getElementById("subTitle");
+  const logoutBtn = document.getElementById("logoutBtn");
 
-const schoolName = document.getElementById("schoolName");
-const className  = document.getElementById("className");
-const staffName  = document.getElementById("staffName");
-const saveSessionBtn = document.getElementById("saveSessionBtn");
-const clearTodayBtn  = document.getElementById("clearTodayBtn");
-const newStaffPin = document.getElementById("newStaffPin");
-const changeStaffPinBtn = document.getElementById("changeStaffPinBtn");
+  const statusWrap = document.getElementById("statusWrap");
+  const statusMsg  = document.getElementById("statusMsg");
 
-/* Guardians */
-const newGuardianName = document.getElementById("newGuardianName");
-const newGuardianPhone = document.getElementById("newGuardianPhone");
-const addGuardianBtn  = document.getElementById("addGuardianBtn");
-const guardianList    = document.getElementById("guardianList");
+  const authView   = document.getElementById("authView");
+  const staffView  = document.getElementById("staffView");
+  const parentView = document.getElementById("parentView");
 
-/* Children */
-const newChildName = document.getElementById("newChildName");
-const addChildBtn  = document.getElementById("addChildBtn");
-const childAdminList = document.getElementById("childAdminList");
+  // School code inputs
+  const schoolCodeStaff = document.getElementById("schoolCodeStaff");
+  const schoolCodeParent = document.getElementById("schoolCodeParent");
 
-/* Link */
-const linkChildSelect = document.getElementById("linkChildSelect");
-const linkGuardianSelect = document.getElementById("linkGuardianSelect");
-const linkBtn = document.getElementById("linkBtn");
-const linkSummary = document.getElementById("linkSummary");
+  // Auth
+  const staffPinInput = document.getElementById("staffPinInput");
+  const staffLoginBtn = document.getElementById("staffLoginBtn");
+  const staffLockMsg  = document.getElementById("staffLockMsg");
 
-/* Pending */
-const pendingCount = document.getElementById("pendingCount");
-const pendingList  = document.getElementById("pendingList");
+  const guardianPhoneInput = document.getElementById("guardianPhoneInput");
+  const guardianPinInput   = document.getElementById("guardianPinInput");
+  const guardianLoginBtn   = document.getElementById("guardianLoginBtn");
 
-/* Parent */
-const parentHeaderInfo = document.getElementById("parentHeaderInfo");
-const parentGuardianName = document.getElementById("parentGuardianName");
-const parentKidsList = document.getElementById("parentKidsList");
-const parentPendingList = document.getElementById("parentPendingList");
+  // Staff
+  const refreshBtn = document.getElementById("refreshBtn");
+  const copyLastSetupBtn = document.getElementById("copyLastSetupBtn");
+  const exportPdfBtn = document.getElementById("exportPdfBtn");
+  const exportCsvBtn = document.getElementById("exportCsvBtn");
 
-const pSelectedChild = document.getElementById("pSelectedChild");
-const pSelectedStatus = document.getElementById("pSelectedStatus");
-const pNotes = document.getElementById("pNotes");
-const dropOffReqBtn = document.getElementById("dropOffReqBtn");
-const pickUpReqBtn  = document.getElementById("pickUpReqBtn");
-const clearParentSelectionBtn = document.getElementById("clearParentSelectionBtn");
+  const schoolName = document.getElementById("schoolName");
+  const className  = document.getElementById("className");
+  const staffName  = document.getElementById("staffName");
+  const saveSessionBtn = document.getElementById("saveSessionBtn");
+  const clearTodayBtn  = document.getElementById("clearTodayBtn");
+  const newStaffPin = document.getElementById("newStaffPin");
+  const changeStaffPinBtn = document.getElementById("changeStaffPinBtn");
 
-/* Logs */
-const logCount = document.getElementById("logCount");
-const logTbody = document.getElementById("logTbody");
+  // Guardians
+  const newGuardianName = document.getElementById("newGuardianName");
+  const newGuardianPhone = document.getElementById("newGuardianPhone");
+  const addGuardianBtn  = document.getElementById("addGuardianBtn");
+  const guardianList    = document.getElementById("guardianList");
 
-/* Modals */
-const parentConfirmModal = document.getElementById("parentConfirmModal");
-const pModalCloseBtn = document.getElementById("pModalCloseBtn");
-const pModalCancelBtn = document.getElementById("pModalCancelBtn");
-const pModalConfirmBtn = document.getElementById("pModalConfirmBtn");
-const pMAction = document.getElementById("pMAction");
-const pMChild = document.getElementById("pMChild");
-const pMGuardian = document.getElementById("pMGuardian");
-const pMTime = document.getElementById("pMTime");
-const pMNotes = document.getElementById("pMNotes");
+  // Children
+  const newChildName = document.getElementById("newChildName");
+  const addChildBtn  = document.getElementById("addChildBtn");
+  const childAdminList = document.getElementById("childAdminList");
 
-const staffApproveModal = document.getElementById("staffApproveModal");
-const sModalCloseBtn = document.getElementById("sModalCloseBtn");
-const sModalRejectBtn = document.getElementById("sModalRejectBtn");
-const sModalApproveBtn = document.getElementById("sModalApproveBtn");
-const sMAction = document.getElementById("sMAction");
-const sMChild = document.getElementById("sMChild");
-const sMGuardian = document.getElementById("sMGuardian");
-const sMReqTime = document.getElementById("sMReqTime");
-const sMConfTime = document.getElementById("sMConfTime");
-const sMNotes = document.getElementById("sMNotes");
+  // Link
+  const linkChildSelect = document.getElementById("linkChildSelect");
+  const linkGuardianSelect = document.getElementById("linkGuardianSelect");
+  const linkBtn = document.getElementById("linkBtn");
+  const linkSummary = document.getElementById("linkSummary");
 
-/* ===== State ===== */
-let session   = loadJSON(KEY_SESSION, { schoolName:"", className:"", staffName:"", staffPin:"123456" });
-let guardians = loadJSON(KEY_GUARDIANS, []);
-let children  = loadJSON(KEY_CHILDREN, []);
-let logs      = loadJSON(KEY_LOGS_TODAY(), []);
-let pending   = loadJSON(KEY_PENDING_TODAY(), []);
-let auth      = loadJSON(KEY_AUTH, null);
+  // Pending
+  const pendingCount = document.getElementById("pendingCount");
+  const pendingList  = document.getElementById("pendingList");
 
-let parentSelectedChildId = null;
-let parentPendingAction = null;
-let staffSelectedPendingId = null;
+  // Parent
+  const parentHeaderInfo = document.getElementById("parentHeaderInfo");
+  const parentGuardianName = document.getElementById("parentGuardianName");
+  const parentKidsList = document.getElementById("parentKidsList");
+  const parentPendingList = document.getElementById("parentPendingList");
 
-/* ===== Views ===== */
-function showAuth(){ authView.classList.remove("hidden"); staffView.classList.add("hidden"); parentView.classList.add("hidden"); logoutBtn.classList.add("hidden"); subTitle.textContent="Welcome"; }
-function showStaff(){ authView.classList.add("hidden"); staffView.classList.remove("hidden"); parentView.classList.add("hidden"); logoutBtn.classList.remove("hidden"); subTitle.textContent="Staff"; }
-function showParent(){ authView.classList.add("hidden"); staffView.classList.add("hidden"); parentView.classList.remove("hidden"); logoutBtn.classList.remove("hidden"); subTitle.textContent="Parent"; }
+  const pSelectedChild = document.getElementById("pSelectedChild");
+  const pSelectedStatus = document.getElementById("pSelectedStatus");
+  const pNotes = document.getElementById("pNotes");
+  const dropOffReqBtn = document.getElementById("dropOffReqBtn");
+  const pickUpReqBtn  = document.getElementById("pickUpReqBtn");
+  const clearParentSelectionBtn = document.getElementById("clearParentSelectionBtn");
 
-function updateParentHeader(){
-  parentHeaderInfo.textContent = [session.schoolName, session.className].filter(Boolean).join(" • ");
-}
+  // Logs
+  const logCount = document.getElementById("logCount");
+  const logTbody = document.getElementById("logTbody");
 
-/* ===== Staff lockout ===== */
-function getStaffLock(){ return loadJSON(KEY_STAFF_LOCK, { until: 0, fails: 0 }); }
-function setStaffLock(obj){ saveJSON(KEY_STAFF_LOCK, obj); }
-function updateLockMsg(){
-  const lock=getStaffLock(); const now=Date.now();
-  if(lock.until && lock.until>now){
-    const sec=Math.ceil((lock.until-now)/1000);
-    staffLockMsg.classList.remove("hidden");
-    staffLockMsg.textContent = `Staff login locked. Try again in ${sec}s.`;
-  } else staffLockMsg.classList.add("hidden");
-}
+  // Modals
+  const parentConfirmModal = document.getElementById("parentConfirmModal");
+  const pModalCloseBtn = document.getElementById("pModalCloseBtn");
+  const pModalCancelBtn = document.getElementById("pModalCancelBtn");
+  const pModalConfirmBtn = document.getElementById("pModalConfirmBtn");
+  const pMAction = document.getElementById("pMAction");
+  const pMChild = document.getElementById("pMChild");
+  const pMGuardian = document.getElementById("pMGuardian");
+  const pMTime = document.getElementById("pMTime");
+  const pMNotes = document.getElementById("pMNotes");
 
-/* ===== Save / Safe input sync (fixes the “deleting letters” bug) ===== */
-function saveAll(){
-  saveJSON(KEY_SESSION, session);
-  saveJSON(KEY_GUARDIANS, guardians);
-  saveJSON(KEY_CHILDREN, children);
-  saveJSON(KEY_LOGS_TODAY(), logs);
-  saveJSON(KEY_PENDING_TODAY(), pending);
-  saveJSON(KEY_AUTH, auth);
-}
-function safeSetInput(el, value){
-  if(document.activeElement === el) return;     // don't overwrite while typing
-  el.value = value ?? "";
-}
+  const staffApproveModal = document.getElementById("staffApproveModal");
+  const sModalCloseBtn = document.getElementById("sModalCloseBtn");
+  const sModalRejectBtn = document.getElementById("sModalRejectBtn");
+  const sModalApproveBtn = document.getElementById("sModalApproveBtn");
+  const sMAction = document.getElementById("sMAction");
+  const sMChild = document.getElementById("sMChild");
+  const sMGuardian = document.getElementById("sMGuardian");
+  const sMReqTime = document.getElementById("sMReqTime");
+  const sMConfTime = document.getElementById("sMConfTime");
+  const sMNotes = document.getElementById("sMNotes");
 
-/* ===== PIN generation ===== */
-function gen4Pin(){
-  // 1000-9999
-  return String(Math.floor(1000 + Math.random() * 9000));
-}
-function normalizePhone(p){
-  return String(p || "").replace(/[^\d]/g, ""); // digits only
-}
+  /* ===========================
+     Views
+  =========================== */
+  function showAuth(){ authView.classList.remove("hidden"); staffView.classList.add("hidden"); parentView.classList.add("hidden"); logoutBtn.classList.add("hidden"); subTitle.textContent="Welcome"; }
+  function showStaff(){ authView.classList.add("hidden"); staffView.classList.remove("hidden"); parentView.classList.add("hidden"); logoutBtn.classList.remove("hidden"); subTitle.textContent="Staff"; }
+  function showParent(){ authView.classList.add("hidden"); staffView.classList.add("hidden"); parentView.classList.remove("hidden"); logoutBtn.classList.remove("hidden"); subTitle.textContent="Parent"; }
 
-/* ===== Linking rules: max 2 parents per child ===== */
-function linkGuardianToChild(childId, guardianId){
-  children = children.map(c=>{
-    if(c.id !== childId) return c;
-    const set = new Set(c.guardianIds || []);
-    set.add(guardianId);
-    const arr = [...set];
-    if(arr.length > 2){
-      // keep first 2
-      return { ...c, guardianIds: arr.slice(0,2) };
+  /* ===========================
+     Staff lockout (device-only)
+  =========================== */
+  function getStaffLock(){ return loadJSON(KEY_STAFF_LOCK, { until: 0, fails: 0 }); }
+  function setStaffLock(obj){ saveJSON(KEY_STAFF_LOCK, obj); }
+  function updateLockMsg(){
+    const lock=getStaffLock(); const now=Date.now();
+    if(lock.until && lock.until>now){
+      const sec=Math.ceil((lock.until-now)/1000);
+      staffLockMsg.classList.remove("hidden");
+      staffLockMsg.textContent = `Staff login locked. Try again in ${sec}s.`;
+    } else staffLockMsg.classList.add("hidden");
+  }
+
+  /* ===========================
+     Firestore paths
+  =========================== */
+  let activeSchoolCode = (localStorage.getItem(KEY_ACTIVE_SCHOOL) || "").trim().toUpperCase();
+  let auth = loadJSON(KEY_AUTH, null);
+
+  function setSchoolCode(code){
+    activeSchoolCode = (code || "").trim().toUpperCase();
+    localStorage.setItem(KEY_ACTIVE_SCHOOL, activeSchoolCode);
+    schoolBadge.textContent = activeSchoolCode ? `School: ${activeSchoolCode}` : "";
+    schoolBadge.classList.toggle("hidden", !activeSchoolCode);
+    safeSetInput(schoolCodeStaff, activeSchoolCode);
+    safeSetInput(schoolCodeParent, activeSchoolCode);
+  }
+
+  function schoolsBase(){
+    if(!activeSchoolCode) throw new Error("Missing School Code");
+    return `schools/${activeSchoolCode}`;
+  }
+  function colPath(name){ return `${schoolsBase()}/${name}`; }
+  function docPath(name, id){ return `${schoolsBase()}/${name}/${id}`; }
+
+  /* ===========================
+     Shared state (from Firestore)
+  =========================== */
+  let session   = { schoolName:"", className:"", staffName:"", staffPin:"123456" };
+  let guardians = []; // [{id,name,phone,phoneDigits,pin,createdAt}]
+  let children  = []; // [{id,name,guardianIds:[]}]
+  let pending   = []; // today pending only
+  let logs      = []; // today logs only
+
+  let unsub = { settings:null, guardians:null, children:null, pending:null, logs:null };
+
+  /* ===========================
+     Firestore helpers
+  =========================== */
+  function serverTS(){ return firebase.firestore.FieldValue.serverTimestamp(); }
+
+  async function ensureSettingsDoc(){
+    const ref = window.DB.doc(`${schoolsBase()}/settings/main`);
+    const snap = await ref.get();
+    if(!snap.exists){
+      await ref.set({ schoolName:"", className:"", staffName:"", staffPin:"123456", createdAt: serverTS(), updatedAt: serverTS() });
     }
-    return { ...c, guardianIds: arr };
-  });
-}
+  }
 
-/* ===== Parent view ===== */
-function latestActionForChild(childId){
-  const last = logs.find(l => l.childId === childId);
-  return last ? last.action : null;
-}
-function clearParentSelection(){
-  parentSelectedChildId = null;
-  pSelectedChild.textContent = "Select a child";
-  pSelectedStatus.textContent = "";
-  pNotes.value = "";
-}
-function renderParentKids(){
-  const gid = auth?.guardianId;
-  const g = guardians.find(x=>x.id===gid);
-  parentGuardianName.textContent = g ? `${g.name} (${g.phone})` : "";
+  async function batchDeleteDocs(docs){
+    // Firestore batch limit: 500
+    const chunkSize = 450;
+    for(let i=0;i<docs.length;i+=chunkSize){
+      const chunk = docs.slice(i, i+chunkSize);
+      const batch = window.DB.batch();
+      chunk.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
+  }
 
-  const myKids = children.filter(c => (c.guardianIds||[]).includes(gid)).slice().sort((a,b)=>a.name.localeCompare(b.name));
-  if(!myKids.length){
-    parentKidsList.innerHTML = `<div class="p-4 text-white/60 text-sm">No linked children. Ask staff to link you.</div>`;
-  } else {
-    parentKidsList.innerHTML = myKids.map(c=>{
-      const st = latestActionForChild(c.id);
-      const pill = st==="DROP_OFF" ? "bg-emerald-400/10 border-emerald-200/20 text-emerald-50"
-                                  : "bg-indigo-400/10 border-indigo-200/20 text-indigo-50";
-      return `
-        <button data-kid="${escA(c.id)}" class="w-full text-left p-4 flex items-center justify-between gap-3 hover:bg-white/5 transition">
-          <div class="text-white font-semibold">${esc(c.name)}</div>
-          ${st ? `<span class="text-xs px-3 py-1 rounded-full border ${pill}">${st==="DROP_OFF"?"IN":"OUT"}</span>` : ``}
-        </button>
-      `;
-    }).join("");
+  /* ===========================
+     Realtime Sync
+  =========================== */
+  function stopRealtime(){
+    Object.values(unsub).forEach(fn => { try{ fn && fn(); } catch{} });
+    unsub = { settings:null, guardians:null, children:null, pending:null, logs:null };
+  }
 
-    [...parentKidsList.querySelectorAll("button[data-kid]")].forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const id = btn.getAttribute("data-kid");
-        parentSelectedChildId = id;
-        const child = children.find(c=>c.id===id);
-        pSelectedChild.textContent = child?.name || "Select a child";
-        const st = latestActionForChild(id);
-        pSelectedStatus.textContent = st ? `Status: ${st==="DROP_OFF"?"IN":"OUT"}` : "";
-        setStatus("Child selected.", "ok");
+  async function startRealtime(){
+    stopRealtime();
+    if(!activeSchoolCode) return;
+
+    await ensureSettingsDoc();
+
+    const today = todayKey();
+
+    // Settings
+    unsub.settings = window.DB.doc(`${schoolsBase()}/settings/main`)
+      .onSnapshot(snap => {
+        if(!snap.exists) return;
+        session = { ...session, ...snap.data() };
+        renderAll();
+      });
+
+    // Guardians
+    unsub.guardians = window.DB.collection(colPath("guardians"))
+      .orderBy("createdAt", "desc")
+      .onSnapshot(snap => {
+        guardians = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+        renderAll();
+      });
+
+    // Children
+    unsub.children = window.DB.collection(colPath("children"))
+      .orderBy("createdAt", "desc")
+      .onSnapshot(snap => {
+        children = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+        renderAll();
+      });
+
+    // Pending (today only)
+    unsub.pending = window.DB.collection(colPath("pending"))
+      .where("date", "==", today)
+      .orderBy("createdAt", "desc")
+      .onSnapshot(snap => {
+        pending = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+        renderAll();
+      });
+
+    // Logs (today only)
+    unsub.logs = window.DB.collection(colPath("logs"))
+      .where("date", "==", today)
+      .orderBy("createdAt", "desc")
+      .onSnapshot(snap => {
+        logs = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+        renderAll();
+      });
+  }
+
+  /* ===========================
+     UI render
+  =========================== */
+  function updateParentHeader(){
+    parentHeaderInfo.textContent = [session.schoolName, session.className].filter(Boolean).join(" • ");
+  }
+
+  function latestActionForChild(childId){
+    const last = logs.find(l => l.childId === childId);
+    return last ? last.action : null;
+  }
+
+  let parentSelectedChildId = null;
+  let parentPendingAction = null;
+  let staffSelectedPendingId = null;
+
+  function clearParentSelection(){
+    parentSelectedChildId = null;
+    pSelectedChild.textContent = "Select a child";
+    pSelectedStatus.textContent = "";
+    pNotes.value = "";
+  }
+
+  function renderParentKids(){
+    const gid = auth?.guardianId;
+    const g = guardians.find(x=>x.id===gid);
+    parentGuardianName.textContent = g ? `${g.name} (${g.phone})` : "";
+
+    const myKids = children.filter(c => (c.guardianIds||[]).includes(gid)).slice().sort((a,b)=>a.name.localeCompare(b.name));
+    if(!myKids.length){
+      parentKidsList.innerHTML = `<div class="p-4 text-white/60 text-sm">No linked children. Ask staff to link you.</div>`;
+    } else {
+      parentKidsList.innerHTML = myKids.map(c=>{
+        const st = latestActionForChild(c.id);
+        const pill = st==="DROP_OFF" ? "bg-emerald-400/10 border-emerald-200/20 text-emerald-50"
+                                    : "bg-indigo-400/10 border-indigo-200/20 text-indigo-50";
+        return `
+          <button data-kid="${escA(c.id)}" class="w-full text-left p-4 flex items-center justify-between gap-3 hover:bg-white/5 transition">
+            <div class="text-white font-semibold">${esc(c.name)}</div>
+            ${st ? `<span class="text-xs px-3 py-1 rounded-full border ${pill}">${st==="DROP_OFF"?"IN":"OUT"}</span>` : ``}
+          </button>
+        `;
+      }).join("");
+
+      [...parentKidsList.querySelectorAll("button[data-kid]")].forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const id = btn.getAttribute("data-kid");
+          parentSelectedChildId = id;
+          const child = children.find(c=>c.id===id);
+          pSelectedChild.textContent = child?.name || "Select a child";
+          const st = latestActionForChild(id);
+          pSelectedStatus.textContent = st ? `Status: ${st==="DROP_OFF"?"IN":"OUT"}` : "";
+          setStatus("Child selected.", "ok");
+        });
+      });
+    }
+
+    const myPending = pending.filter(p => p.guardianId === gid);
+    parentPendingList.innerHTML = myPending.length
+      ? myPending.slice(0,8).map(p=>`<div class="text-white/85">• ${esc(p.childName)} — ${p.action==="DROP_OFF"?"Drop-off":"Pick-up"} (waiting)</div>`).join("")
+      : "None";
+  }
+
+  function renderGuardianList(){
+    if(!guardians.length){
+      guardianList.innerHTML = `<div class="p-4 text-white/60 text-sm">No parents</div>`;
+      return;
+    }
+    const list = guardians.slice().sort((a,b)=>(a.name||"").localeCompare(b.name||""));
+    guardianList.innerHTML = list.map(g=>`
+      <div class="p-3 border-b border-white/5">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <div class="text-white font-semibold">${esc(g.name)}</div>
+            <div class="text-white/60 text-xs">${esc(g.phone)}</div>
+          </div>
+          <div class="flex gap-2">
+            <button data-copy="${escA(g.id)}"
+              class="text-xs px-3 py-2 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
+              Copy PIN
+            </button>
+            <button data-delg="${escA(g.id)}"
+              class="text-xs px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+              Remove
+            </button>
+          </div>
+        </div>
+        <div class="mt-2 text-xs text-white/70">
+          Login PIN: <span class="font-semibold text-white">${esc(g.pin)}</span>
+        </div>
+      </div>
+    `).join("");
+
+    [...guardianList.querySelectorAll("button[data-delg]")].forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const id = btn.getAttribute("data-delg");
+        if(!confirm("Remove parent?")) return;
+
+        // remove guardian
+        await window.DB.doc(docPath("guardians", id)).delete();
+
+        // unlink in children
+        const affected = children.filter(c => (c.guardianIds||[]).includes(id));
+        for(const c of affected){
+          const next = (c.guardianIds||[]).filter(x=>x!==id);
+          await window.DB.doc(docPath("children", c.id)).update({ guardianIds: next, updatedAt: serverTS() });
+        }
+
+        // delete today's pending for guardian
+        const q = await window.DB.collection(colPath("pending")).where("date","==",todayKey()).where("guardianId","==",id).get();
+        await batchDeleteDocs(q.docs);
+
+        setStatus("Parent removed.", "info");
+      });
+    });
+
+    [...guardianList.querySelectorAll("button[data-copy]")].forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const id = btn.getAttribute("data-copy");
+        const g = guardians.find(x=>x.id===id);
+        if(!g) return;
+        const text = `Parent Login PIN for ${g.name} (${g.phone}): ${g.pin}`;
+        try { await navigator.clipboard.writeText(text); setStatus("Copied to clipboard.", "ok"); }
+        catch { setStatus("Copy failed (browser restriction).", "err"); }
       });
     });
   }
 
-  const myPending = pending.filter(p => p.guardianId === gid);
-  parentPendingList.innerHTML = myPending.length
-    ? myPending.slice(0,8).map(p=>`<div class="text-white/85">• ${esc(p.childName)} — ${p.action==="DROP_OFF"?"Drop-off":"Pick-up"} (waiting)</div>`).join("")
-    : "None";
-}
-
-/* ===== Staff lists ===== */
-function renderGuardianList(){
-  if(!guardians.length){
-    guardianList.innerHTML = `<div class="p-4 text-white/60 text-sm">No parents</div>`;
-    return;
-  }
-  guardians.sort((a,b)=>a.name.localeCompare(b.name));
-  guardianList.innerHTML = guardians.map(g=>`
-    <div class="p-3 border-b border-white/5">
-      <div class="flex items-center justify-between gap-3">
-        <div>
-          <div class="text-white font-semibold">${esc(g.name)}</div>
-          <div class="text-white/60 text-xs">${esc(g.phone)}</div>
-        </div>
-        <div class="flex gap-2">
-          <button data-copy="${escA(g.id)}"
-            class="text-xs px-3 py-2 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
-            Copy PIN
-          </button>
-          <button data-delg="${escA(g.id)}"
+  function renderChildAdminList(){
+    if(!children.length){
+      childAdminList.innerHTML = `<div class="p-4 text-white/60 text-sm">No children</div>`;
+      return;
+    }
+    const nameById = new Map(guardians.map(g=>[g.id, `${g.name} (${g.phone})`]));
+    const list = children.slice().sort((a,b)=>(a.name||"").localeCompare(b.name||""));
+    childAdminList.innerHTML = list.map(c=>{
+      const linked = (c.guardianIds||[]).map(id=>nameById.get(id)).filter(Boolean);
+      return `
+        <div class="p-3 border-b border-white/5 flex items-start justify-between gap-3">
+          <div>
+            <div class="text-white font-semibold">${esc(c.name)}</div>
+            <div class="text-white/60 text-xs mt-1">
+              ${linked.length ? linked.map(x=>`• ${esc(x)}`).join("<br/>") : "No linked parents"}
+            </div>
+          </div>
+          <button data-delc="${escA(c.id)}"
             class="text-xs px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
             Remove
           </button>
         </div>
-      </div>
-      <div class="mt-2 text-xs text-white/70">
-        Login PIN: <span class="font-semibold text-white">${esc(g.pin)}</span>
-      </div>
-    </div>
-  `).join("");
+      `;
+    }).join("");
 
-  [...guardianList.querySelectorAll("button[data-delg]")].forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const id = btn.getAttribute("data-delg");
-      if(!confirm("Remove parent?")) return;
-      guardians = guardians.filter(x=>x.id!==id);
-      children = children.map(c=>({ ...c, guardianIds:(c.guardianIds||[]).filter(gid=>gid!==id) }));
-      pending = pending.filter(p=>p.guardianId!==id);
-      saveAll(); renderAll();
-      setStatus("Parent removed.", "info");
+    [...childAdminList.querySelectorAll("button[data-delc]")].forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const id = btn.getAttribute("data-delc");
+        if(!confirm("Remove child?")) return;
+
+        await window.DB.doc(docPath("children", id)).delete();
+
+        // delete pending for child today
+        const q = await window.DB.collection(colPath("pending")).where("date","==",todayKey()).where("childId","==",id).get();
+        await batchDeleteDocs(q.docs);
+
+        if(parentSelectedChildId===id) clearParentSelection();
+        setStatus("Child removed.", "info");
+      });
     });
-  });
-
-  [...guardianList.querySelectorAll("button[data-copy]")].forEach(btn=>{
-    btn.addEventListener("click", async ()=>{
-      const id = btn.getAttribute("data-copy");
-      const g = guardians.find(x=>x.id===id);
-      if(!g) return;
-      const text = `Parent Login PIN for ${g.name} (${g.phone}): ${g.pin}`;
-      try { await navigator.clipboard.writeText(text); setStatus("Copied to clipboard.", "ok"); }
-      catch { setStatus("Copy failed (browser restriction).", "err"); }
-    });
-  });
-}
-
-function renderChildAdminList(){
-  if(!children.length){
-    childAdminList.innerHTML = `<div class="p-4 text-white/60 text-sm">No children</div>`;
-    return;
   }
-  const nameById = new Map(guardians.map(g=>[g.id, `${g.name} (${g.phone})`]));
-  children.sort((a,b)=>a.name.localeCompare(b.name));
-  childAdminList.innerHTML = children.map(c=>{
-    const linked = (c.guardianIds||[]).map(id=>nameById.get(id)).filter(Boolean);
-    return `
-      <div class="p-3 border-b border-white/5 flex items-start justify-between gap-3">
-        <div>
-          <div class="text-white font-semibold">${esc(c.name)}</div>
-          <div class="text-white/60 text-xs mt-1">
-            ${linked.length ? linked.map(x=>`• ${esc(x)}`).join("<br/>") : "No linked parents"}
+
+  function renderLinkDropdowns(){
+    linkChildSelect.innerHTML = `<option value="">Select child…</option>` +
+      children.slice().sort((a,b)=>(a.name||"").localeCompare(b.name||""))
+        .map(c=>`<option value="${escA(c.id)}">${esc(c.name)}</option>`).join("");
+
+    linkGuardianSelect.innerHTML = `<option value="">Select parent…</option>` +
+      guardians.slice().sort((a,b)=>(a.name||"").localeCompare(b.name||""))
+        .map(g=>`<option value="${escA(g.id)}">${esc(g.name)} (${esc(g.phone)})</option>`).join("");
+
+    linkSummary.textContent = `${children.length} children • ${guardians.length} parents • max 2 parents per child`;
+  }
+
+  function renderPending(){
+    pendingCount.textContent = `${pending.length} pending`;
+    if(!pending.length){
+      pendingList.innerHTML = `<div class="p-4 text-white/60 text-sm">No pending requests</div>`;
+      return;
+    }
+    pendingList.innerHTML = pending.map(p=>{
+      const pill = p.action==="DROP_OFF" ? "bg-emerald-400/10 border-emerald-200/20 text-emerald-50"
+                                        : "bg-indigo-400/10 border-indigo-200/20 text-indigo-50";
+      return `
+        <div class="p-4 border-b border-white/5 flex items-start justify-between gap-3">
+          <div>
+            <div class="text-white font-semibold">${esc(p.childName)}</div>
+            <div class="mt-1 text-white/70 text-sm">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs border ${pill}">
+                ${p.action==="DROP_OFF"?"Drop-off":"Pick-up"}
+              </span>
+              <span class="ml-2">${esc(p.guardianName)} (${esc(p.guardianPhone)})</span>
+            </div>
+            <div class="mt-1 text-white/60 text-xs">Parent time: ${esc(p.requestedAt)}</div>
           </div>
+          <button data-approve="${escA(p.id)}"
+            class="px-4 py-2 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
+            Review
+          </button>
         </div>
-        <button data-delc="${escA(c.id)}"
-          class="text-xs px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
-          Remove
-        </button>
-      </div>
-    `;
-  }).join("");
+      `;
+    }).join("");
 
-  [...childAdminList.querySelectorAll("button[data-delc]")].forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const id = btn.getAttribute("data-delc");
-      if(!confirm("Remove child?")) return;
-      children = children.filter(x=>x.id!==id);
-      pending = pending.filter(p=>p.childId!==id);
-      if(parentSelectedChildId===id) clearParentSelection();
-      saveAll(); renderAll();
-      setStatus("Child removed.", "info");
+    [...pendingList.querySelectorAll("button[data-approve]")].forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-approve");
+        openStaffApproveModal(id);
+      });
     });
-  });
-}
-
-function renderLinkDropdowns(){
-  linkChildSelect.innerHTML = `<option value="">Select child…</option>` +
-    children.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${escA(c.id)}">${esc(c.name)}</option>`).join("");
-
-  linkGuardianSelect.innerHTML = `<option value="">Select parent…</option>` +
-    guardians.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(g=>`<option value="${escA(g.id)}">${esc(g.name)} (${esc(g.phone)})</option>`).join("");
-
-  linkSummary.textContent = `${children.length} children • ${guardians.length} parents • max 2 parents per child`;
-}
-
-/* ===== Pending + Logs ===== */
-function renderPending(){
-  pendingCount.textContent = `${pending.length} pending`;
-  if(!pending.length){
-    pendingList.innerHTML = `<div class="p-4 text-white/60 text-sm">No pending requests</div>`;
-    return;
   }
-  pendingList.innerHTML = pending.map(p=>{
-    const pill = p.action==="DROP_OFF" ? "bg-emerald-400/10 border-emerald-200/20 text-emerald-50"
-                                      : "bg-indigo-400/10 border-indigo-200/20 text-indigo-50";
-    return `
-      <div class="p-4 border-b border-white/5 flex items-start justify-between gap-3">
-        <div>
-          <div class="text-white font-semibold">${esc(p.childName)}</div>
-          <div class="mt-1 text-white/70 text-sm">
+
+  function renderLogs(){
+    logCount.textContent = `${logs.length} entries`;
+    if(!logs.length){
+      logTbody.innerHTML = `<tr><td class="px-4 py-6 text-white/60" colspan="7">No entries yet today.</td></tr>`;
+      return;
+    }
+    logTbody.innerHTML = logs.map(r=>{
+      const pill = r.action==="DROP_OFF" ? "bg-emerald-400/10 border-emerald-200/20 text-emerald-50"
+                                        : "bg-indigo-400/10 border-indigo-200/20 text-indigo-50";
+      return `
+        <tr class="hover:bg-white/5 transition">
+          <td class="px-4 py-3 whitespace-nowrap">${esc(r.parentTime)}</td>
+          <td class="px-4 py-3 whitespace-nowrap">${esc(r.staffTime)}</td>
+          <td class="px-4 py-3">
             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs border ${pill}">
-              ${p.action==="DROP_OFF"?"Drop-off":"Pick-up"}
+              ${r.action==="DROP_OFF"?"Drop-off":"Pick-up"}
             </span>
-            <span class="ml-2">${esc(p.guardianName)} (${esc(p.guardianPhone)})</span>
-          </div>
-          <div class="mt-1 text-white/60 text-xs">Parent time: ${esc(p.requestedAt)}</div>
-        </div>
-        <button data-approve="${escA(p.id)}"
-          class="px-4 py-2 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
-          Review
-        </button>
-      </div>
-    `;
-  }).join("");
-
-  [...pendingList.querySelectorAll("button[data-approve]")].forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const id = btn.getAttribute("data-approve");
-      openStaffApproveModal(id);
-    });
-  });
-}
-
-function renderLogs(){
-  logCount.textContent = `${logs.length} entries`;
-  if(!logs.length){
-    logTbody.innerHTML = `<tr><td class="px-4 py-6 text-white/60" colspan="7">No entries yet today.</td></tr>`;
-    return;
+          </td>
+          <td class="px-4 py-3">${esc(r.childName)}</td>
+          <td class="px-4 py-3">${esc(r.guardianName)} (${esc(r.guardianPhone)})</td>
+          <td class="px-4 py-3 max-w-[260px] truncate" title="${escA(r.notes||"")}">${esc(r.notes||"")}</td>
+          <td class="px-4 py-3">${esc(r.staffName||"")}</td>
+        </tr>
+      `;
+    }).join("");
   }
-  logTbody.innerHTML = logs.map(r=>{
-    const pill = r.action==="DROP_OFF" ? "bg-emerald-400/10 border-emerald-200/20 text-emerald-50"
-                                      : "bg-indigo-400/10 border-indigo-200/20 text-indigo-50";
-    return `
-      <tr class="hover:bg-white/5 transition">
-        <td class="px-4 py-3 whitespace-nowrap">${esc(r.parentTime)}</td>
-        <td class="px-4 py-3 whitespace-nowrap">${esc(r.staffTime)}</td>
-        <td class="px-4 py-3">
-          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs border ${pill}">
-            ${r.action==="DROP_OFF"?"Drop-off":"Pick-up"}
-          </span>
-        </td>
-        <td class="px-4 py-3">${esc(r.childName)}</td>
-        <td class="px-4 py-3">${esc(r.guardianName)} (${esc(r.guardianPhone)})</td>
-        <td class="px-4 py-3 max-w-[260px] truncate" title="${escA(r.notes||"")}">${esc(r.notes||"")}</td>
-        <td class="px-4 py-3">${esc(r.staffName||"")}</td>
-      </tr>
-    `;
-  }).join("");
-}
 
-/* ===== Parent request modal ===== */
-function openParentConfirmModal(action){
-  if(!auth || auth.role!=="parent") return setStatus("Login as parent.", "err");
-  if(!parentSelectedChildId) return setStatus("Select a child.", "err");
+  function renderAll(){
+    updateParentHeader();
+    safeSetInput(schoolName, session.schoolName);
+    safeSetInput(className, session.className);
+    safeSetInput(staffName, session.staffName);
 
-  const g = guardians.find(x=>x.id===auth.guardianId);
-  const c = children.find(x=>x.id===parentSelectedChildId);
-  if(!g || !c) return setStatus("Missing data.", "err");
-  if(!(c.guardianIds||[]).includes(g.id)) return setStatus("Not authorized for this child.", "err");
+    renderGuardianList();
+    renderChildAdminList();
+    renderLinkDropdowns();
+    renderPending();
+    renderLogs();
 
-  // block duplicates
-  if(pending.find(p=>p.childId===c.id && p.guardianId===g.id && p.action===action)) return setStatus("You already have a pending request.", "err");
-  const last = logs.find(l=>l.childId===c.id);
-  if(last && last.action===action) return setStatus("Already recorded.", "err");
-
-  parentPendingAction = action;
-
-  pMAction.textContent = action==="DROP_OFF" ? "Drop-off" : "Pick-up";
-  pMChild.textContent = c.name;
-  pMGuardian.textContent = `${g.name} (${g.phone})`;
-  pMTime.textContent = nowLocal();
-  pMNotes.textContent = pNotes.value.trim() || "-";
-
-  parentConfirmModal.classList.remove("hidden");
-}
-function closeParentModal(){ parentConfirmModal.classList.add("hidden"); parentPendingAction=null; }
-
-function commitPending(){
-  const action = parentPendingAction;
-  if(!action) return;
-
-  const g = guardians.find(x=>x.id===auth.guardianId);
-  const c = children.find(x=>x.id===parentSelectedChildId);
-
-  pending.unshift({
-    id: makeId("PEND"),
-    date: todayKey(),
-    action,
-    guardianId: g.id,
-    guardianName: g.name,
-    guardianPhone: g.phone,
-    childId: c.id,
-    childName: c.name,
-    notes: pNotes.value.trim(),
-    requestedAt: nowLocal()
-  });
-
-  pNotes.value = "";
-  saveAll(); renderAll();
-  setStatus("Request sent to staff.", "ok");
-  closeParentModal();
-}
-
-/* ===== Staff approve modal ===== */
-function openStaffApproveModal(pendingId){
-  const req = pending.find(p=>p.id===pendingId);
-  if(!req) return;
-  staffSelectedPendingId = pendingId;
-
-  sMAction.textContent = req.action==="DROP_OFF" ? "Drop-off" : "Pick-up";
-  sMChild.textContent = req.childName;
-  sMGuardian.textContent = `${req.guardianName} (${req.guardianPhone})`;
-  sMReqTime.textContent = req.requestedAt;
-  sMConfTime.textContent = nowLocal();
-  sMNotes.textContent = req.notes || "-";
-
-  staffApproveModal.classList.remove("hidden");
-}
-function closeStaffModal(){ staffApproveModal.classList.add("hidden"); staffSelectedPendingId=null; }
-
-function staffReject(){
-  if(!staffSelectedPendingId) return;
-  pending = pending.filter(p=>p.id!==staffSelectedPendingId);
-  saveAll(); renderAll();
-  setStatus("Request rejected.", "info");
-  closeStaffModal();
-}
-function staffApprove(){
-  if(!staffSelectedPendingId) return;
-  if(!session.staffName || !session.staffName.trim()) return setStatus("Set 'Staff on duty' in settings.", "err");
-
-  const req = pending.find(p=>p.id===staffSelectedPendingId);
-  if(!req) return;
-
-  logs.unshift({
-    date: todayKey(),
-    action: req.action,
-    childId: req.childId,
-    childName: req.childName,
-    guardianId: req.guardianId,
-    guardianName: req.guardianName,
-    guardianPhone: req.guardianPhone,
-    notes: req.notes,
-    parentTime: req.requestedAt,
-    staffTime: nowLocal(),
-    staffName: session.staffName
-  });
-
-  pending = pending.filter(p=>p.id!==staffSelectedPendingId);
-
-  saveAll(); renderAll();
-  setStatus("Approved and logged.", "ok");
-  closeStaffModal();
-}
-
-/* ===== End-of-day: archive + clear ===== */
-function snapshotSetup(){
-  // setup snapshot = session + guardians + children (NOT logs)
-  const snap = {
-    savedAt: nowLocal(),
-    session: { ...session },
-    guardians: JSON.parse(JSON.stringify(guardians)),
-    children: JSON.parse(JSON.stringify(children))
-  };
-  saveJSON(KEY_LAST_SETUP, snap);
-}
-function archiveAndClearToday(){
-  // store logs to archive
-  const archive = loadJSON(KEY_ARCHIVE, []);
-  archive.unshift({ date: todayKey(), exportedAt: nowLocal(), logs: JSON.parse(JSON.stringify(logs)) });
-  saveJSON(KEY_ARCHIVE, archive);
-
-  // also snapshot setup for “copy last”
-  snapshotSetup();
-
-  // clear today's operational records
-  logs = [];
-  pending = [];
-  saveAll();
-  renderAll();
-}
-
-/* ===== Copy last setup ===== */
-function copyLastSetup(){
-  const snap = loadJSON(KEY_LAST_SETUP, null);
-  if(!snap) return setStatus("No saved setup found yet. Export once to create it.", "err");
-
-  session = { ...session, ...snap.session }; // keep current pin unless overwritten
-  guardians = JSON.parse(JSON.stringify(snap.guardians || []));
-  children  = JSON.parse(JSON.stringify(snap.children  || []));
-
-  saveAll(); renderAll();
-  setStatus("Last setup copied. You can edit as needed.", "ok");
-}
-
-/* ===== Render All ===== */
-function renderAll(){
-  // reload daily keys (important when date changes)
-  logs = loadJSON(KEY_LOGS_TODAY(), logs);
-  pending = loadJSON(KEY_PENDING_TODAY(), pending);
-
-  // safe-set inputs (fix typing deletion)
-  safeSetInput(schoolName, session.schoolName);
-  safeSetInput(className, session.className);
-  safeSetInput(staffName, session.staffName);
-
-  updateParentHeader();
-  renderGuardianList();
-  renderChildAdminList();
-  renderLinkDropdowns();
-  renderPending();
-  renderLogs();
-  if(auth?.role==="parent") renderParentKids();
-  updateLockMsg();
-}
-
-/* ===== Events ===== */
-logoutBtn.addEventListener("click", ()=>{
-  auth = null;
-  saveAll();
-  showAuth();
-  clearParentSelection();
-  setStatus("Logged out.", "info");
-});
-
-refreshBtn.addEventListener("click", ()=>{
-  renderAll();
-  setStatus("Refreshed.", "info");
-});
-
-copyLastSetupBtn.addEventListener("click", ()=>{
-  if(!confirm("Copy last setup (settings + parents + children + links)?")) return;
-  copyLastSetup();
-});
-
-/* Staff login */
-staffLoginBtn.addEventListener("click", ()=>{
-  const lock = getStaffLock(); const now = Date.now();
-  if(lock.until && lock.until>now) return updateLockMsg();
-
-  const pin = staffPinInput.value.trim();
-  if(pin !== (session.staffPin || "123456")){
-    const nextFails = (lock.fails||0)+1;
-    let until=0;
-    if(nextFails>=5) until = Date.now() + 60_000;
-    setStaffLock({ fails: nextFails>=5 ? 0 : nextFails, until });
-    setStatus("Invalid staff PIN.", "err");
+    if(auth?.role==="parent") renderParentKids();
     updateLockMsg();
-    return;
-  }
-  setStaffLock({ fails:0, until:0 });
-  auth = { role:"staff" };
-  staffPinInput.value = "";
-  saveAll();
-  showStaff();
-  setStatus("Welcome, staff.", "ok");
-});
-
-/* Parent login (phone + pin) */
-guardianLoginBtn.addEventListener("click", ()=>{
-  const phone = normalizePhone(guardianPhoneInput.value);
-  const pin   = guardianPinInput.value.trim();
-
-  if(!phone) return setStatus("Enter your phone number.", "err");
-  if(!pin) return setStatus("Enter your PIN.", "err");
-
-  const g = guardians.find(x => normalizePhone(x.phone) === phone);
-  if(!g) return setStatus("Phone not found. Ask staff to add your number.", "err");
-  if(pin !== g.pin) return setStatus("Invalid PIN.", "err");
-
-  auth = { role:"parent", guardianId: g.id };
-  guardianPhoneInput.value = "";
-  guardianPinInput.value = "";
-  saveAll();
-  showParent();
-  clearParentSelection();
-  renderAll();
-  setStatus("Welcome.", "ok");
-});
-
-/* Save session */
-saveSessionBtn.addEventListener("click", ()=>{
-  session.schoolName = schoolName.value.trim();
-  session.className  = className.value.trim();
-  session.staffName  = staffName.value.trim();
-  saveAll(); renderAll();
-  setStatus("Saved.", "ok");
-});
-
-changeStaffPinBtn.addEventListener("click", ()=>{
-  const pin = newStaffPin.value.trim();
-  if(!pin || pin.length < 6) return setStatus("Staff PIN must be 6+ digits.", "err");
-  session.staffPin = pin;
-  newStaffPin.value = "";
-  saveAll();
-  setStatus("Staff PIN updated.", "ok");
-});
-
-/* Clear today */
-clearTodayBtn.addEventListener("click", ()=>{
-  if(!confirm("Clear today’s log and pending requests?")) return;
-  snapshotSetup();
-  logs = [];
-  pending = [];
-  saveAll(); renderAll();
-  setStatus("Cleared.", "ok");
-});
-
-/* Add parent (auto pin) */
-addGuardianBtn.addEventListener("click", ()=>{
-  const name = newGuardianName.value.trim();
-  const phoneRaw = newGuardianPhone.value.trim();
-  const phone = normalizePhone(phoneRaw);
-
-  if(!name) return setStatus("Enter parent name.", "err");
-  if(!phone) return setStatus("Enter a valid phone number.", "err");
-  if(guardians.some(g => normalizePhone(g.phone) === phone)) return setStatus("Phone already exists.", "err");
-
-  let pin = gen4Pin();
-  // avoid collisions
-  for(let i=0;i<10;i++){
-    if(!guardians.some(g=>g.pin===pin)) break;
-    pin = gen4Pin();
   }
 
-  guardians.push({ id: makeId("G"), name, phone: phoneRaw, pin });
-  newGuardianName.value = "";
-  newGuardianPhone.value = "";
-  saveAll(); renderAll();
-  setStatus(`Parent added. PIN: ${pin}`, "ok");
-});
+  /* ===========================
+     Parent request modal
+  =========================== */
+  function openParentConfirmModal(action){
+    if(!auth || auth.role!=="parent") return setStatus("Login as parent.", "err");
+    if(!parentSelectedChildId) return setStatus("Select a child.", "err");
 
-/* Add child */
-addChildBtn.addEventListener("click", ()=>{
-  const name = newChildName.value.trim();
-  if(!name) return setStatus("Enter child name.", "err");
-  children.push({ id: makeId("C"), name, guardianIds: [] });
-  newChildName.value = "";
-  saveAll(); renderAll();
-  setStatus("Child added.", "ok");
-});
+    const g = guardians.find(x=>x.id===auth.guardianId);
+    const c = children.find(x=>x.id===parentSelectedChildId);
+    if(!g || !c) return setStatus("Missing data.", "err");
+    if(!(c.guardianIds||[]).includes(g.id)) return setStatus("Not authorized for this child.", "err");
 
-/* Link (max 2) */
-linkBtn.addEventListener("click", ()=>{
-  const cid = linkChildSelect.value;
-  const gid = linkGuardianSelect.value;
-  if(!cid || !gid) return setStatus("Select child and parent.", "err");
+    if(pending.find(p=>p.childId===c.id && p.guardianId===g.id && p.action===action)) return setStatus("You already have a pending request.", "err");
+    const last = logs.find(l=>l.childId===c.id);
+    if(last && last.action===action) return setStatus("Already recorded.", "err");
 
-  const child = children.find(c=>c.id===cid);
-  if(!child) return;
+    parentPendingAction = action;
 
-  const current = child.guardianIds || [];
-  if(current.includes(gid)) return setStatus("Already linked.", "info");
-  if(current.length >= 2) return setStatus("This child already has 2 linked parents.", "err");
+    pMAction.textContent = action==="DROP_OFF" ? "Drop-off" : "Pick-up";
+    pMChild.textContent = c.name;
+    pMGuardian.textContent = `${g.name} (${g.phone})`;
+    pMTime.textContent = nowLocal();
+    pMNotes.textContent = pNotes.value.trim() || "-";
 
-  linkGuardianToChild(cid, gid);
-  saveAll(); renderAll();
-  setStatus("Linked.", "ok");
-});
+    parentConfirmModal.classList.remove("hidden");
+  }
+  function closeParentModal(){ parentConfirmModal.classList.add("hidden"); parentPendingAction=null; }
 
-/* Parent actions */
-clearParentSelectionBtn.addEventListener("click", clearParentSelection);
-dropOffReqBtn.addEventListener("click", ()=>openParentConfirmModal("DROP_OFF"));
-pickUpReqBtn.addEventListener("click", ()=>openParentConfirmModal("PICK_UP"));
+  async function commitPending(){
+    const action = parentPendingAction;
+    if(!action) return;
 
-pModalCloseBtn.addEventListener("click", closeParentModal);
-pModalCancelBtn.addEventListener("click", closeParentModal);
-parentConfirmModal.addEventListener("click", (e)=>{ if(e.target===parentConfirmModal) closeParentModal(); });
-pModalConfirmBtn.addEventListener("click", commitPending);
+    const g = guardians.find(x=>x.id===auth.guardianId);
+    const c = children.find(x=>x.id===parentSelectedChildId);
+    if(!g || !c) return setStatus("Missing data.", "err");
 
-/* Staff approve actions */
-sModalCloseBtn.addEventListener("click", closeStaffModal);
-staffApproveModal.addEventListener("click", (e)=>{ if(e.target===staffApproveModal) closeStaffModal(); });
-sModalRejectBtn.addEventListener("click", staffReject);
-sModalApproveBtn.addEventListener("click", staffApprove);
+    // create pending doc in Firestore
+    await window.DB.collection(colPath("pending")).add({
+      date: todayKey(),
+      action,
+      guardianId: g.id,
+      guardianName: g.name,
+      guardianPhone: g.phone,
+      childId: c.id,
+      childName: c.name,
+      notes: pNotes.value.trim(),
+      requestedAt: nowLocal(),
+      createdAt: serverTS()
+    });
 
-/* Export & clear */
-exportCsvBtn.addEventListener("click", ()=>{
-  if(!logs.length) return setStatus("No logs to export.", "err");
-  const headers = ["date","parentTime","staffTime","action","schoolName","className","childName","guardianName","guardianPhone","notes","staffName"];
-  const csvEscape = v => `"${String(v ?? "").replaceAll('"','""')}"`;
-  const rows = logs.slice().reverse().map(r => headers.map(h => csvEscape(
-    h==="schoolName" ? session.schoolName :
-    h==="className"  ? session.className  :
-    r[h]
-  )));
-  const csv = [headers.join(","), ...rows.map(r=>r.join(","))].join("\n");
-  const blob = new Blob([csv], { type:"text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href=url; a.download=`daily_log_${todayKey()}.csv`; a.click();
-  URL.revokeObjectURL(url);
+    pNotes.value = "";
+    setStatus("Request sent to staff.", "ok");
+    closeParentModal();
+  }
 
-  archiveAndClearToday();
-  setStatus("CSV exported and cleared for next day.", "ok");
-});
+  /* ===========================
+     Staff approve modal
+  =========================== */
+  function openStaffApproveModal(pendingId){
+    const req = pending.find(p=>p.id===pendingId);
+    if(!req) return;
+    staffSelectedPendingId = pendingId;
 
-exportPdfBtn.addEventListener("click", ()=>{
-  if(!logs.length) return setStatus("No logs to export.", "err");
+    sMAction.textContent = req.action==="DROP_OFF" ? "Drop-off" : "Pick-up";
+    sMChild.textContent = req.childName;
+    sMGuardian.textContent = `${req.guardianName} (${req.guardianPhone})`;
+    sMReqTime.textContent = req.requestedAt;
+    sMConfTime.textContent = nowLocal();
+    sMNotes.textContent = req.notes || "-";
 
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit:"pt", format:"letter" });
-  const margin=40; let y=52;
+    staffApproveModal.classList.remove("hidden");
+  }
+  function closeStaffModal(){ staffApproveModal.classList.add("hidden"); staffSelectedPendingId=null; }
 
-  doc.setFont("helvetica","bold"); doc.setFontSize(16);
-  doc.text(`${session.schoolName || "School"} — Daily Drop-off & Pick-up Log`, margin, y);
+  async function staffReject(){
+    if(!staffSelectedPendingId) return;
+    await window.DB.doc(docPath("pending", staffSelectedPendingId)).delete();
+    setStatus("Request rejected.", "info");
+    closeStaffModal();
+  }
 
-  doc.setFont("helvetica","normal"); doc.setFontSize(11);
-  y+=20; doc.text(`Date: ${todayKey()}    Classroom: ${session.className || ""}`, margin, y);
-  y+=16; doc.text(`Staff on duty: ${session.staffName || ""}    Generated: ${nowLocal()}`, margin, y);
-  y+=18;
+  async function staffApprove(){
+    if(!staffSelectedPendingId) return;
+    if(!session.staffName || !session.staffName.trim()) return setStatus("Set 'Staff on duty' in settings.", "err");
 
-  const body = logs.slice().reverse().map(r => ([
-    r.parentTime, r.staffTime,
-    r.action==="DROP_OFF" ? "Drop-off" : "Pick-up",
-    r.childName,
-    `${r.guardianName} (${r.guardianPhone})`,
-    (r.notes||"").slice(0,90),
-    r.staffName || ""
-  ]));
+    const req = pending.find(p=>p.id===staffSelectedPendingId);
+    if(!req) return;
 
-  doc.autoTable({
-    startY: y,
-    head: [["Parent Time","Staff Confirm Time","Action","Child","Parent","Notes","Staff"]],
-    body,
-    theme: "grid",
-    styles: { font:"helvetica", fontSize: 8.5, cellPadding: 4, overflow:"linebreak" },
-    headStyles: { fillColor: [20,20,20], textColor: 255 },
-    margin: { left: margin, right: margin },
-    columnStyles: { 0:{cellWidth:88}, 1:{cellWidth:88}, 2:{cellWidth:60}, 3:{cellWidth:90}, 4:{cellWidth:120}, 5:{cellWidth:110}, 6:{cellWidth:55} }
+    // write log entry
+    await window.DB.collection(colPath("logs")).add({
+      date: todayKey(),
+      action: req.action,
+      childId: req.childId,
+      childName: req.childName,
+      guardianId: req.guardianId,
+      guardianName: req.guardianName,
+      guardianPhone: req.guardianPhone,
+      notes: req.notes || "",
+      parentTime: req.requestedAt,
+      staffTime: nowLocal(),
+      staffName: session.staffName,
+      createdAt: serverTS()
+    });
+
+    // remove pending
+    await window.DB.doc(docPath("pending", staffSelectedPendingId)).delete();
+
+    setStatus("Approved and logged.", "ok");
+    closeStaffModal();
+  }
+
+  /* ===========================
+     Export + archive + clear (shared)
+  =========================== */
+  async function snapshotSetupToFirestore(){
+    const snap = {
+      savedAt: nowLocal(),
+      session: { ...session },
+      guardians: guardians.map(g => ({ id:g.id, ...g })),
+      children: children.map(c => ({ id:c.id, ...c }))
+    };
+    await window.DB.doc(`${schoolsBase()}/snapshots/lastSetup`).set(snap);
+  }
+
+  async function archiveAndClearToday(){
+    const date = todayKey();
+
+    // archive logs for that date
+    await window.DB.doc(`${schoolsBase()}/archives/${date}`).set({
+      date,
+      exportedAt: nowLocal(),
+      schoolName: session.schoolName || "",
+      className: session.className || "",
+      staffName: session.staffName || "",
+      logs: logs.slice().reverse(), // oldest->newest
+      createdAt: serverTS()
+    });
+
+    // snapshot setup
+    await snapshotSetupToFirestore();
+
+    // delete logs of date
+    const qLogs = await window.DB.collection(colPath("logs")).where("date","==",date).get();
+    await batchDeleteDocs(qLogs.docs);
+
+    // delete pending of date
+    const qPend = await window.DB.collection(colPath("pending")).where("date","==",date).get();
+    await batchDeleteDocs(qPend.docs);
+  }
+
+  async function copyLastSetupFromFirestore(){
+    const snap = await window.DB.doc(`${schoolsBase()}/snapshots/lastSetup`).get();
+    if(!snap.exists) return setStatus("No saved setup found yet. Export once to create it.", "err");
+
+    const data = snap.data();
+    const s = data.session || {};
+    // keep current staffPin unless snap includes it
+    session = { ...session, ...s };
+
+    // restore guardians/children by rewriting collections
+    // (simple approach: wipe and recreate)
+    const gSnap = (data.guardians || []).map(x => ({...x}));
+    const cSnap = (data.children  || []).map(x => ({...x}));
+
+    // delete all current guardians/children
+    const allG = await window.DB.collection(colPath("guardians")).get();
+    await batchDeleteDocs(allG.docs);
+    const allC = await window.DB.collection(colPath("children")).get();
+    await batchDeleteDocs(allC.docs);
+
+    // recreate
+    for(const g of gSnap){
+      const { id, ...rest } = g;
+      await window.DB.doc(docPath("guardians", id)).set({ ...rest, createdAt: serverTS() }, { merge:true });
+    }
+    for(const c of cSnap){
+      const { id, ...rest } = c;
+      await window.DB.doc(docPath("children", id)).set({ ...rest, createdAt: serverTS() }, { merge:true });
+    }
+
+    // update settings
+    await window.DB.doc(`${schoolsBase()}/settings/main`).set({ ...session, updatedAt: serverTS() }, { merge:true });
+
+    setStatus("Last setup copied. You can edit as needed.", "ok");
+  }
+
+  /* ===========================
+     Events: Logout / Refresh
+  =========================== */
+  logoutBtn.addEventListener("click", ()=>{
+    auth = null;
+    saveJSON(KEY_AUTH, auth);
+    showAuth();
+    clearParentSelection();
+    setStatus("Logged out.", "info");
   });
 
-  doc.save(`daily_log_${todayKey()}.pdf`);
+  refreshBtn.addEventListener("click", ()=>{
+    renderAll();
+    setStatus("Refreshed.", "info");
+  });
 
-  archiveAndClearToday();
-  setStatus("PDF exported and cleared for next day.", "ok");
-});
+  copyLastSetupBtn.addEventListener("click", async ()=>{
+    if(!activeSchoolCode) return setStatus("Enter School Code first.", "err");
+    if(!confirm("Copy last setup (settings + parents + children + links)?")) return;
+    await copyLastSetupFromFirestore();
+  });
 
-/* Boot */
-function boot(){
-  renderAll();
-  auth = loadJSON(KEY_AUTH, null);
-  if(auth?.role==="staff") showStaff();
-  else if(auth?.role==="parent"){ showParent(); renderAll(); }
-  else showAuth();
-  updateParentHeader();
-}
-boot();
-</script>
+  /* ===========================
+     Staff Login (Firestore settings)
+  =========================== */
+  staffLoginBtn.addEventListener("click", async ()=>{
+    try{
+      const code = (schoolCodeStaff.value || "").trim().toUpperCase();
+      if(!code) return setStatus("Enter School Code.", "err");
+      setSchoolCode(code);
+
+      const lock = getStaffLock(); const now = Date.now();
+      if(lock.until && lock.until>now) return updateLockMsg();
+
+      await ensureSettingsDoc();
+
+      // load staff pin
+      const sDoc = await window.DB.doc(`${schoolsBase()}/settings/main`).get();
+      const s = sDoc.data() || {};
+      const expectedPin = String(s.staffPin || "123456");
+
+      const pin = staffPinInput.value.trim();
+      if(pin !== expectedPin){
+        const nextFails = (lock.fails||0)+1;
+        let until=0;
+        if(nextFails>=5) until = Date.now() + 60_000;
+        setStaffLock({ fails: nextFails>=5 ? 0 : nextFails, until });
+        setStatus("Invalid staff PIN.", "err");
+        updateLockMsg();
+        return;
+      }
+
+      setStaffLock({ fails:0, until:0 });
+      auth = { role:"staff" };
+      saveJSON(KEY_AUTH, auth);
+
+      staffPinInput.value = "";
+      showStaff();
+      await startRealtime();
+      setStatus("Welcome, staff.", "ok");
+    } catch(e){
+      setStatus(`Error: ${e.message || e}`, "err");
+    }
+  });
+
+  /* ===========================
+     Parent Login (Firestore guardians)
+  =========================== */
+  guardianLoginBtn.addEventListener("click", async ()=>{
+    try{
+      const code = (schoolCodeParent.value || "").trim().toUpperCase();
+      if(!code) return setStatus("Enter School Code.", "err");
+      setSchoolCode(code);
+
+      const phoneDigits = normalizePhone(guardianPhoneInput.value);
+      const pin = guardianPinInput.value.trim();
+      if(!phoneDigits) return setStatus("Enter your phone number.", "err");
+      if(!pin) return setStatus("Enter your PIN.", "err");
+
+      await ensureSettingsDoc();
+
+      // find guardian by phoneDigits
+      const q = await window.DB.collection(colPath("guardians"))
+        .where("phoneDigits", "==", phoneDigits)
+        .limit(1)
+        .get();
+
+      if(q.empty) return setStatus("Phone not found. Ask staff to add your number.", "err");
+
+      const doc = q.docs[0];
+      const g = { id: doc.id, ...doc.data() };
+
+      if(String(pin) !== String(g.pin)) return setStatus("Invalid PIN.", "err");
+
+      auth = { role:"parent", guardianId: g.id };
+      saveJSON(KEY_AUTH, auth);
+
+      guardianPhoneInput.value = "";
+      guardianPinInput.value = "";
+      showParent();
+      clearParentSelection();
+      await startRealtime();
+      setStatus("Welcome.", "ok");
+    } catch(e){
+      setStatus(`Error: ${e.message || e}`, "err");
+    }
+  });
+
+  /* ===========================
+     Save settings (Firestore)
+  =========================== */
+  saveSessionBtn.addEventListener("click", async ()=>{
+    if(!activeSchoolCode) return setStatus("Missing School Code.", "err");
+    session.schoolName = schoolName.value.trim();
+    session.className  = className.value.trim();
+    session.staffName  = staffName.value.trim();
+
+    await window.DB.doc(`${schoolsBase()}/settings/main`).set({
+      schoolName: session.schoolName,
+      className: session.className,
+      staffName: session.staffName,
+      updatedAt: serverTS()
+    }, { merge:true });
+
+    setStatus("Saved.", "ok");
+  });
+
+  changeStaffPinBtn.addEventListener("click", async ()=>{
+    if(!activeSchoolCode) return setStatus("Missing School Code.", "err");
+    const pin = newStaffPin.value.trim();
+    if(!pin || pin.length < 6) return setStatus("Staff PIN must be 6+ digits.", "err");
+    session.staffPin = pin;
+    newStaffPin.value = "";
+
+    await window.DB.doc(`${schoolsBase()}/settings/main`).set({
+      staffPin: session.staffPin,
+      updatedAt: serverTS()
+    }, { merge:true });
+
+    setStatus("Staff PIN updated.", "ok");
+  });
+
+  /* ===========================
+     Clear today (shared)
+  =========================== */
+  clearTodayBtn.addEventListener("click", async ()=>{
+    if(!confirm("Clear today’s log and pending requests?")) return;
+    await snapshotSetupToFirestore();
+    await archiveAndClearToday(); // archives + clears
+    setStatus("Cleared for today (across devices).", "ok");
+  });
+
+  /* ===========================
+     Add parent (Firestore)
+  =========================== */
+  addGuardianBtn.addEventListener("click", async ()=>{
+    if(!activeSchoolCode) return setStatus("Enter School Code first.", "err");
+
+    const name = newGuardianName.value.trim();
+    const phoneRaw = newGuardianPhone.value.trim();
+    const phoneDigits = normalizePhone(phoneRaw);
+
+    if(!name) return setStatus("Enter parent name.", "err");
+    if(!phoneDigits) return setStatus("Enter a valid phone number.", "err");
+
+    // block duplicates by phoneDigits
+    const dupe = await window.DB.collection(colPath("guardians"))
+      .where("phoneDigits","==",phoneDigits).limit(1).get();
+    if(!dupe.empty) return setStatus("Phone already exists.", "err");
+
+    let pin = gen4Pin();
+
+    await window.DB.collection(colPath("guardians")).add({
+      name,
+      phone: phoneRaw,
+      phoneDigits,
+      pin,
+      createdAt: serverTS()
+    });
+
+    newGuardianName.value = "";
+    newGuardianPhone.value = "";
+
+    setStatus(`Parent added. PIN: ${pin}`, "ok");
+  });
+
+  /* ===========================
+     Add child (Firestore)
+  =========================== */
+  addChildBtn.addEventListener("click", async ()=>{
+    if(!activeSchoolCode) return setStatus("Enter School Code first.", "err");
+    const name = newChildName.value.trim();
+    if(!name) return setStatus("Enter child name.", "err");
+
+    await window.DB.collection(colPath("children")).add({
+      name,
+      guardianIds: [],
+      createdAt: serverTS()
+    });
+
+    newChildName.value = "";
+    setStatus("Child added.", "ok");
+  });
+
+  /* ===========================
+     Link parent to child (max 2)
+  =========================== */
+  linkBtn.addEventListener("click", async ()=>{
+    const cid = linkChildSelect.value;
+    const gid = linkGuardianSelect.value;
+    if(!cid || !gid) return setStatus("Select child and parent.", "err");
+
+    const child = children.find(c=>c.id===cid);
+    if(!child) return;
+
+    const current = child.guardianIds || [];
+    if(current.includes(gid)) return setStatus("Already linked.", "info");
+    if(current.length >= 2) return setStatus("This child already has 2 linked parents.", "err");
+
+    const next = [...current, gid];
+    await window.DB.doc(docPath("children", cid)).set({ guardianIds: next, updatedAt: serverTS() }, { merge:true });
+
+    setStatus("Linked.", "ok");
+  });
+
+  /* ===========================
+     Parent actions
+  =========================== */
+  clearParentSelectionBtn.addEventListener("click", clearParentSelection);
+  dropOffReqBtn.addEventListener("click", ()=>openParentConfirmModal("DROP_OFF"));
+  pickUpReqBtn.addEventListener("click", ()=>openParentConfirmModal("PICK_UP"));
+
+  pModalCloseBtn.addEventListener("click", closeParentModal);
+  pModalCancelBtn.addEventListener("click", closeParentModal);
+  parentConfirmModal.addEventListener("click", (e)=>{ if(e.target===parentConfirmModal) closeParentModal(); });
+  pModalConfirmBtn.addEventListener("click", commitPending);
+
+  /* ===========================
+     Staff approve actions
+  =========================== */
+  sModalCloseBtn.addEventListener("click", closeStaffModal);
+  staffApproveModal.addEventListener("click", (e)=>{ if(e.target===staffApproveModal) closeStaffModal(); });
+  sModalRejectBtn.addEventListener("click", staffReject);
+  sModalApproveBtn.addEventListener("click", staffApprove);
+
+  /* ===========================
+     Export CSV/PDF (today) then archive+clear (shared)
+  =========================== */
+  exportCsvBtn.addEventListener("click", async ()=>{
+    if(!logs.length) return setStatus("No logs to export.", "err");
+
+    const headers = ["date","parentTime","staffTime","action","schoolName","className","childName","guardianName","guardianPhone","notes","staffName"];
+    const csvEscape = v => `"${String(v ?? "").replaceAll('"','""')}"`;
+    const rows = logs.slice().reverse().map(r => headers.map(h => csvEscape(
+      h==="schoolName" ? session.schoolName :
+      h==="className"  ? session.className  :
+      r[h]
+    )));
+    const csv = [headers.join(","), ...rows.map(r=>r.join(","))].join("\n");
+    const blob = new Blob([csv], { type:"text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href=url; a.download=`daily_log_${todayKey()}.csv`; a.click();
+    URL.revokeObjectURL(url);
+
+    await archiveAndClearToday();
+    setStatus("CSV exported and cleared for next day (all devices).", "ok");
+  });
+
+  exportPdfBtn.addEventListener("click", async ()=>{
+    if(!logs.length) return setStatus("No logs to export.", "err");
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit:"pt", format:"letter" });
+    const margin=40; let y=52;
+
+    doc.setFont("helvetica","bold"); doc.setFontSize(16);
+    doc.text(`${session.schoolName || "School"} — Daily Drop-off & Pick-up Log`, margin, y);
+
+    doc.setFont("helvetica","normal"); doc.setFontSize(11);
+    y+=20; doc.text(`Date: ${todayKey()}    Classroom: ${session.className || ""}`, margin, y);
+    y+=16; doc.text(`Staff on duty: ${session.staffName || ""}    Generated: ${nowLocal()}`, margin, y);
+    y+=18;
+
+    const body = logs.slice().reverse().map(r => ([
+      r.parentTime, r.staffTime,
+      r.action==="DROP_OFF" ? "Drop-off" : "Pick-up",
+      r.childName,
+      `${r.guardianName} (${r.guardianPhone})`,
+      (r.notes||"").slice(0,90),
+      r.staffName || ""
+    ]));
+
+    doc.autoTable({
+      startY: y,
+      head: [["Parent Time","Staff Confirm Time","Action","Child","Parent","Notes","Staff"]],
+      body,
+      theme: "grid",
+      styles: { font:"helvetica", fontSize: 8.5, cellPadding: 4, overflow:"linebreak" },
+      headStyles: { fillColor: [20,20,20], textColor: 255 },
+      margin: { left: margin, right: margin },
+      columnStyles: { 0:{cellWidth:88}, 1:{cellWidth:88}, 2:{cellWidth:60}, 3:{cellWidth:90}, 4:{cellWidth:120}, 5:{cellWidth:110}, 6:{cellWidth:55} }
+    });
+
+    doc.save(`daily_log_${todayKey()}.pdf`);
+
+    await archiveAndClearToday();
+    setStatus("PDF exported and cleared for next day (all devices).", "ok");
+  });
+
+  /* ===========================
+     Boot
+  =========================== */
+  function boot(){
+    setSchoolCode(activeSchoolCode);
+
+    auth = loadJSON(KEY_AUTH, null);
+
+    if(auth?.role==="staff"){
+      showStaff();
+      startRealtime().catch(e=>setStatus(`Sync error: ${e.message||e}`, "err"));
+    } else if(auth?.role==="parent"){
+      showParent();
+      startRealtime().catch(e=>setStatus(`Sync error: ${e.message||e}`, "err"));
+    } else {
+      showAuth();
+    }
+
+    renderAll();
+  }
+
+  boot();
+  </script>
 </body>
 </html>
