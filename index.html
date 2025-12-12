@@ -1,0 +1,1296 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Preschool Check-In/Out</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+
+  <style>
+    .bg-grid {
+      background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.12) 1px, transparent 0);
+      background-size: 18px 18px;
+    }
+    .pop { animation: pop 180ms ease-out; }
+    @keyframes pop { from { transform: translateY(6px); opacity:.72; } to { transform: translateY(0); opacity:1; } }
+
+    /* Dropdown readability fix */
+    select option { color: #0f172a; background: #ffffff; }
+
+    ::-webkit-scrollbar { height: 10px; width: 10px; }
+    ::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.35); border-radius: 999px; }
+    ::-webkit-scrollbar-track { background: rgba(241,245,249,0); }
+  </style>
+
+  <script>
+    tailwind.config = {
+      theme: { extend: { boxShadow: { card: "0 18px 60px rgba(2,6,23,0.20)" } } }
+    }
+  </script>
+</head>
+
+<body class="min-h-screen text-slate-900">
+  <!-- Background -->
+  <div class="fixed inset-0 -z-10">
+    <div class="absolute inset-0 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900"></div>
+    <div class="absolute inset-0 opacity-30 bg-grid"></div>
+
+    <div class="absolute -top-28 -left-28 w-[520px] h-[520px] rounded-full blur-3xl opacity-25
+                bg-gradient-to-br from-cyan-300 via-indigo-400 to-fuchsia-400"></div>
+    <div class="absolute -bottom-40 -right-28 w-[620px] h-[620px] rounded-full blur-3xl opacity-20
+                bg-gradient-to-br from-amber-300 via-rose-300 to-indigo-300"></div>
+
+    <div class="absolute top-[30%] left-[55%] w-[380px] h-[380px] rounded-full blur-3xl opacity-15
+                bg-gradient-to-br from-emerald-300 via-cyan-300 to-indigo-300"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-20">
+    <div class="backdrop-blur-xl bg-white/10 border-b border-white/10">
+      <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-white/15 border border-white/15 flex items-center justify-center shadow-card">
+            <span class="text-white text-lg">🧸</span>
+          </div>
+          <div>
+            <h1 class="text-white text-lg md:text-xl font-semibold tracking-tight">Preschool Check-In/Out</h1>
+            <p class="text-white/70 text-xs md:text-sm" id="subTitle">Welcome</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span id="todayBadge" class="hidden sm:inline text-xs px-3 py-1 rounded-full bg-white/10 border border-white/15 text-white/90"></span>
+          <button id="logoutBtn"
+            class="hidden px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 lg:py-10">
+    <!-- Status -->
+    <div id="statusWrap" class="hidden mb-5">
+      <div id="statusMsg" class="pop rounded-2xl border px-4 py-3 text-sm"></div>
+    </div>
+
+    <!-- AUTH -->
+    <section id="authView" class="grid lg:grid-cols-2 gap-6">
+      <!-- Staff login -->
+      <div class="rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card">
+        <div class="p-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-white font-semibold text-lg">Staff Login</h2>
+            <span class="text-xs px-3 py-1 rounded-full bg-cyan-400/10 border border-cyan-200/20 text-cyan-50">Admin</span>
+          </div>
+
+          <div class="mt-4 space-y-3">
+            <input id="staffPinInput" type="password" inputmode="numeric"
+              class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                     focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
+              placeholder="Enter staff PIN"/>
+            <button id="staffLoginBtn"
+              class="w-full px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
+              Login as Staff
+            </button>
+          </div>
+
+          <div class="mt-4 text-xs text-white/55">
+            Default staff PIN is <b>123456</b>. Staff PIN requires <b>6+ digits</b>.
+          </div>
+
+          <div id="staffLockMsg" class="mt-3 hidden text-xs px-3 py-2 rounded-xl bg-rose-400/10 border border-rose-200/20 text-rose-50"></div>
+        </div>
+      </div>
+
+      <!-- Parent login (phone + pin) -->
+      <div class="rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card">
+        <div class="p-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-white font-semibold text-lg">Parent Login</h2>
+            <span class="text-xs px-3 py-1 rounded-full bg-indigo-400/10 border border-indigo-200/20 text-indigo-50">Guardian</span>
+          </div>
+
+          <div class="mt-4 space-y-3">
+            <input id="guardianPhoneInput" inputmode="tel"
+              class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                     focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
+              placeholder="Phone number (as staff entered)"/>
+
+            <input id="guardianPinInput" type="password" inputmode="numeric"
+              class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                     focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
+              placeholder="4-digit PIN"/>
+
+            <button id="guardianLoginBtn"
+              class="w-full px-4 py-3 rounded-2xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition">
+              Login as Parent
+            </button>
+
+            <div class="text-white/55 text-xs">
+              PIN is automatically generated by staff when your number is added.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PARENT VIEW -->
+    <section id="parentView" class="hidden space-y-6">
+      <div class="rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card">
+        <div class="p-6 md:p-7">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 class="text-white font-semibold text-lg">Parent Check-In/Out</h2>
+              <p id="parentHeaderInfo" class="text-white/70 text-sm"></p>
+            </div>
+            <div class="text-white/70 text-sm">
+              Logged in: <span id="parentGuardianName" class="text-white font-semibold"></span>
+            </div>
+          </div>
+
+          <div class="mt-5 grid lg:grid-cols-2 gap-4">
+            <!-- Your kids -->
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div class="flex items-center justify-between">
+                <div class="text-white/85 text-sm font-semibold">Your Children</div>
+                <span class="text-xs px-3 py-1 rounded-full bg-white/10 border border-white/15 text-white/80">Tap to select</span>
+              </div>
+              <div id="parentKidsList" class="mt-3 max-h-[360px] overflow-auto rounded-2xl border border-white/10 bg-white/5"></div>
+            </div>
+
+            <!-- Request approval -->
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div class="text-white/85 text-sm font-semibold">Request Staff Confirmation</div>
+
+              <div class="mt-4">
+                <div id="pSelectedChild" class="text-white text-lg font-semibold">Select a child</div>
+                <div id="pSelectedStatus" class="text-white/60 text-xs mt-1"></div>
+              </div>
+
+              <div class="mt-4">
+                <label class="block">
+                  <span class="text-white/80 text-xs">Notes (optional)</span>
+                  <input id="pNotes"
+                    class="mt-1 w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                           focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
+                    placeholder="Optional note"/>
+                </label>
+              </div>
+
+              <div class="mt-5 grid grid-cols-2 gap-3">
+                <button id="dropOffReqBtn"
+                  class="px-4 py-4 rounded-2xl bg-emerald-500 text-white font-semibold hover:bg-emerald-600 active:scale-[0.99] transition">
+                  ✅ Drop-off
+                </button>
+                <button id="pickUpReqBtn"
+                  class="px-4 py-4 rounded-2xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 active:scale-[0.99] transition">
+                  🎒 Pick-up
+                </button>
+              </div>
+
+              <button id="clearParentSelectionBtn"
+                class="mt-3 w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+                Clear
+              </button>
+
+              <div class="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div class="text-white/70 text-xs">Pending requests</div>
+                <div id="parentPendingList" class="mt-2 text-white/85 text-sm"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STAFF VIEW -->
+    <section id="staffView" class="hidden space-y-6">
+      <div class="rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card">
+        <div class="p-6 md:p-7">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 class="text-white font-semibold text-lg">Staff Dashboard</h2>
+              <p class="text-white/70 text-sm">Approve parent requests • Export & clear daily records</p>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+              <button id="refreshBtn"
+                class="px-4 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+                Refresh
+              </button>
+              <button id="copyLastSetupBtn"
+                class="px-4 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+                Copy Last Setup
+              </button>
+              <button id="exportPdfBtn"
+                class="px-4 py-2 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600 transition">
+                Export PDF & Clear
+              </button>
+              <button id="exportCsvBtn"
+                class="px-4 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+                Export CSV & Clear
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-6 grid lg:grid-cols-12 gap-6">
+            <!-- Settings -->
+            <div class="lg:col-span-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div class="text-white/85 text-sm font-semibold">Settings</div>
+
+              <div class="mt-3 space-y-3">
+                <input id="schoolName"
+                  class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                         focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
+                  placeholder="School / Campus"/>
+                <input id="className"
+                  class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                         focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
+                  placeholder="Classroom"/>
+                <input id="staffName"
+                  class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                         focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
+                  placeholder="Staff on duty"/>
+
+                <div class="grid grid-cols-2 gap-2">
+                  <input id="newStaffPin"
+                    type="password" inputmode="numeric"
+                    class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                           focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
+                    placeholder="New staff PIN"/>
+                  <button id="changeStaffPinBtn"
+                    class="px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
+                    Change PIN
+                  </button>
+                </div>
+              </div>
+
+              <div class="mt-4 grid grid-cols-2 gap-2">
+                <button id="saveSessionBtn"
+                  class="px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
+                  Save
+                </button>
+                <button id="clearTodayBtn"
+                  class="px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+                  Clear Today
+                </button>
+              </div>
+            </div>
+
+            <!-- Guardians -->
+            <div class="lg:col-span-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div class="text-white/85 text-sm font-semibold">Parents / Guardians (phone → auto PIN)</div>
+              <div class="mt-3 grid gap-3">
+                <input id="newGuardianName"
+                  class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                         focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
+                  placeholder="Parent name"/>
+                <input id="newGuardianPhone"
+                  inputmode="tel"
+                  class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                         focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
+                  placeholder="Phone number"/>
+                <button id="addGuardianBtn"
+                  class="px-4 py-3 rounded-2xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition">
+                  Add Parent (Generate PIN)
+                </button>
+              </div>
+              <div id="guardianList" class="mt-4 max-h-[220px] overflow-auto rounded-2xl border border-white/10 bg-white/5"></div>
+            </div>
+
+            <!-- Children -->
+            <div class="lg:col-span-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div class="text-white/85 text-sm font-semibold">Children</div>
+              <div class="mt-3 grid gap-3">
+                <input id="newChildName"
+                  class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                         focus:outline-none focus:ring-2 focus:ring-emerald-300/40"
+                  placeholder="Child name"/>
+                <button id="addChildBtn"
+                  class="px-4 py-3 rounded-2xl bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition">
+                  Add Child
+                </button>
+              </div>
+              <div id="childAdminList" class="mt-4 max-h-[220px] overflow-auto rounded-2xl border border-white/10 bg-white/5"></div>
+            </div>
+          </div>
+
+          <!-- Link (max 2 parents per child) -->
+          <div class="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div class="text-white/85 text-sm font-semibold">Link Parents to Child (max 2)</div>
+            <div class="mt-4 grid md:grid-cols-3 gap-3">
+              <select id="linkChildSelect"
+                class="rounded-2xl border border-white/15 bg-white/10 text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-300/40">
+                <option value="">Select child…</option>
+              </select>
+              <select id="linkGuardianSelect"
+                class="rounded-2xl border border-white/15 bg-white/10 text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-300/40">
+                <option value="">Select parent…</option>
+              </select>
+              <button id="linkBtn"
+                class="px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
+                Link
+              </button>
+            </div>
+            <div id="linkSummary" class="mt-4 text-white/70 text-sm"></div>
+          </div>
+
+          <!-- Pending approvals -->
+          <div class="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div class="flex items-center justify-between">
+              <div class="text-white/85 text-sm font-semibold">Pending Approvals</div>
+              <span id="pendingCount" class="text-xs px-3 py-1 rounded-full bg-white/10 border border-white/15 text-white/80"></span>
+            </div>
+            <div id="pendingList" class="mt-4 max-h-[320px] overflow-auto rounded-2xl border border-white/10 bg-white/5"></div>
+          </div>
+
+          <!-- Log -->
+          <div class="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div class="flex items-center justify-between">
+              <div class="text-white/85 text-sm font-semibold">Today’s Log</div>
+              <div class="text-white/60 text-xs" id="logCount"></div>
+            </div>
+
+            <div class="mt-4 overflow-auto rounded-2xl border border-white/10 bg-white/5">
+              <table class="min-w-full text-sm">
+                <thead class="sticky top-0 bg-slate-950/60 backdrop-blur border-b border-white/10">
+                  <tr class="text-white/90">
+                    <th class="text-left px-4 py-3 font-semibold">Parent Time</th>
+                    <th class="text-left px-4 py-3 font-semibold">Staff Confirm Time</th>
+                    <th class="text-left px-4 py-3 font-semibold">Action</th>
+                    <th class="text-left px-4 py-3 font-semibold">Child</th>
+                    <th class="text-left px-4 py-3 font-semibold">Parent</th>
+                    <th class="text-left px-4 py-3 font-semibold">Notes</th>
+                    <th class="text-left px-4 py-3 font-semibold">Staff</th>
+                  </tr>
+                </thead>
+                <tbody id="logTbody" class="divide-y divide-white/5 text-white/85"></tbody>
+              </table>
+            </div>
+
+            <div class="mt-3 text-white/55 text-xs">
+              Export clears <b>today’s log & pending</b> and saves a snapshot so you can copy setup tomorrow.
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Parent confirm modal -->
+  <div id="parentConfirmModal" class="hidden fixed inset-0 z-50">
+    <div class="absolute inset-0 bg-black/60"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="w-full max-w-lg rounded-3xl bg-white text-slate-900 shadow-2xl">
+        <div class="p-5 md:p-6">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold">Confirm Request</h3>
+            <button id="pModalCloseBtn" class="px-3 py-2 rounded-xl hover:bg-slate-100">✕</button>
+          </div>
+
+          <div class="mt-4 rounded-2xl border bg-slate-50 p-4">
+            <div class="text-sm text-slate-600">Action</div>
+            <div id="pMAction" class="text-lg font-semibold"></div>
+
+            <div class="mt-3 grid grid-cols-2 gap-3">
+              <div>
+                <div class="text-sm text-slate-600">Child</div>
+                <div id="pMChild" class="font-semibold"></div>
+              </div>
+              <div>
+                <div class="text-sm text-slate-600">Parent</div>
+                <div id="pMGuardian" class="font-semibold"></div>
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <div class="text-sm text-slate-600">Request Time</div>
+              <div id="pMTime" class="font-semibold"></div>
+            </div>
+
+            <div class="mt-3">
+              <div class="text-sm text-slate-600">Notes</div>
+              <div id="pMNotes" class="text-slate-800"></div>
+            </div>
+          </div>
+
+          <div class="mt-5 grid grid-cols-2 gap-3">
+            <button id="pModalCancelBtn" class="px-4 py-3 rounded-2xl bg-slate-100 font-semibold hover:bg-slate-200">Cancel</button>
+            <button id="pModalConfirmBtn" class="px-4 py-3 rounded-2xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700">Send to Staff</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Staff approve modal -->
+  <div id="staffApproveModal" class="hidden fixed inset-0 z-50">
+    <div class="absolute inset-0 bg-black/60"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="w-full max-w-lg rounded-3xl bg-white text-slate-900 shadow-2xl">
+        <div class="p-5 md:p-6">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold">Staff Approval</h3>
+            <button id="sModalCloseBtn" class="px-3 py-2 rounded-xl hover:bg-slate-100">✕</button>
+          </div>
+
+          <div class="mt-4 rounded-2xl border bg-slate-50 p-4">
+            <div class="text-sm text-slate-600">Action</div>
+            <div id="sMAction" class="text-lg font-semibold"></div>
+
+            <div class="mt-3 grid grid-cols-2 gap-3">
+              <div><div class="text-sm text-slate-600">Child</div><div id="sMChild" class="font-semibold"></div></div>
+              <div><div class="text-sm text-slate-600">Parent</div><div id="sMGuardian" class="font-semibold"></div></div>
+            </div>
+
+            <div class="mt-3 grid grid-cols-2 gap-3">
+              <div><div class="text-sm text-slate-600">Parent Time</div><div id="sMReqTime" class="font-semibold"></div></div>
+              <div><div class="text-sm text-slate-600">Staff Confirm Time</div><div id="sMConfTime" class="font-semibold"></div></div>
+            </div>
+
+            <div class="mt-3">
+              <div class="text-sm text-slate-600">Notes</div>
+              <div id="sMNotes" class="text-slate-800"></div>
+            </div>
+          </div>
+
+          <div class="mt-5 grid grid-cols-2 gap-3">
+            <button id="sModalRejectBtn" class="px-4 py-3 rounded-2xl bg-rose-100 text-rose-700 font-semibold hover:bg-rose-200">Reject</button>
+            <button id="sModalApproveBtn" class="px-4 py-3 rounded-2xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700">Approve</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ===== Helpers ===== */
+const pad2 = n => String(n).padStart(2,"0");
+const todayKey = () => { const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; };
+const nowLocal = () => { const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`; };
+
+const loadJSON = (k,f) => { const r=localStorage.getItem(k); if(!r) return f; try{return JSON.parse(r)}catch{return f} };
+const saveJSON = (k,v) => localStorage.setItem(k, JSON.stringify(v));
+const esc = s => String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+const escA = s => esc(s).replaceAll("\n"," ");
+
+const makeId = p => p + "_" + Math.random().toString(16).slice(2) + Date.now().toString(16);
+
+function setStatus(msg, type="info") {
+  statusWrap.classList.remove("hidden");
+  statusMsg.classList.remove("pop"); void statusMsg.offsetWidth; statusMsg.classList.add("pop");
+  const base = "pop rounded-2xl border px-4 py-3 text-sm";
+  const styles = {
+    ok:  "bg-emerald-400/10 border-emerald-200/20 text-emerald-50",
+    err: "bg-rose-400/10 border-rose-200/20 text-rose-50",
+    info:"bg-white/10 border-white/15 text-white/90"
+  };
+  statusMsg.className = `${base} ${styles[type] || styles.info}`;
+  statusMsg.textContent = msg;
+}
+
+/* ===== Storage Keys ===== */
+const KEY_AUTH       = "APP_AUTH_V3";
+const KEY_SESSION    = "APP_SESSION_V5";     // {schoolName,className,staffName,staffPin}
+const KEY_GUARDIANS  = "APP_GUARDIANS_V3";   // [{id,name,phone,pin}]
+const KEY_CHILDREN   = "APP_CHILDREN_V3";    // [{id,name,guardianIds:[]}]
+const KEY_LOGS_TODAY  = () => `APP_LOGS_${todayKey()}`;
+const KEY_PENDING_TODAY = () => `APP_PENDING_${todayKey()}`;
+const KEY_STAFF_LOCK = "APP_STAFF_LOCK_V1";
+const KEY_LAST_SETUP = "APP_LAST_SETUP_SNAPSHOT"; // snapshot of setup for “Copy Last Setup”
+const KEY_ARCHIVE    = "APP_ARCHIVE_LOGS";   // [{date, logs:[], exportedAt}]
+
+/* ===== DOM ===== */
+const todayBadge = document.getElementById("todayBadge");
+todayBadge.textContent = `Today: ${todayKey()}`; todayBadge.classList.remove("hidden");
+
+const subTitle = document.getElementById("subTitle");
+const logoutBtn = document.getElementById("logoutBtn");
+
+const statusWrap = document.getElementById("statusWrap");
+const statusMsg  = document.getElementById("statusMsg");
+
+const authView   = document.getElementById("authView");
+const staffView  = document.getElementById("staffView");
+const parentView = document.getElementById("parentView");
+
+/* Auth */
+const staffPinInput = document.getElementById("staffPinInput");
+const staffLoginBtn = document.getElementById("staffLoginBtn");
+const staffLockMsg  = document.getElementById("staffLockMsg");
+
+const guardianPhoneInput = document.getElementById("guardianPhoneInput");
+const guardianPinInput   = document.getElementById("guardianPinInput");
+const guardianLoginBtn   = document.getElementById("guardianLoginBtn");
+
+/* Staff */
+const refreshBtn = document.getElementById("refreshBtn");
+const copyLastSetupBtn = document.getElementById("copyLastSetupBtn");
+const exportPdfBtn = document.getElementById("exportPdfBtn");
+const exportCsvBtn = document.getElementById("exportCsvBtn");
+
+const schoolName = document.getElementById("schoolName");
+const className  = document.getElementById("className");
+const staffName  = document.getElementById("staffName");
+const saveSessionBtn = document.getElementById("saveSessionBtn");
+const clearTodayBtn  = document.getElementById("clearTodayBtn");
+const newStaffPin = document.getElementById("newStaffPin");
+const changeStaffPinBtn = document.getElementById("changeStaffPinBtn");
+
+/* Guardians */
+const newGuardianName = document.getElementById("newGuardianName");
+const newGuardianPhone = document.getElementById("newGuardianPhone");
+const addGuardianBtn  = document.getElementById("addGuardianBtn");
+const guardianList    = document.getElementById("guardianList");
+
+/* Children */
+const newChildName = document.getElementById("newChildName");
+const addChildBtn  = document.getElementById("addChildBtn");
+const childAdminList = document.getElementById("childAdminList");
+
+/* Link */
+const linkChildSelect = document.getElementById("linkChildSelect");
+const linkGuardianSelect = document.getElementById("linkGuardianSelect");
+const linkBtn = document.getElementById("linkBtn");
+const linkSummary = document.getElementById("linkSummary");
+
+/* Pending */
+const pendingCount = document.getElementById("pendingCount");
+const pendingList  = document.getElementById("pendingList");
+
+/* Parent */
+const parentHeaderInfo = document.getElementById("parentHeaderInfo");
+const parentGuardianName = document.getElementById("parentGuardianName");
+const parentKidsList = document.getElementById("parentKidsList");
+const parentPendingList = document.getElementById("parentPendingList");
+
+const pSelectedChild = document.getElementById("pSelectedChild");
+const pSelectedStatus = document.getElementById("pSelectedStatus");
+const pNotes = document.getElementById("pNotes");
+const dropOffReqBtn = document.getElementById("dropOffReqBtn");
+const pickUpReqBtn  = document.getElementById("pickUpReqBtn");
+const clearParentSelectionBtn = document.getElementById("clearParentSelectionBtn");
+
+/* Logs */
+const logCount = document.getElementById("logCount");
+const logTbody = document.getElementById("logTbody");
+
+/* Modals */
+const parentConfirmModal = document.getElementById("parentConfirmModal");
+const pModalCloseBtn = document.getElementById("pModalCloseBtn");
+const pModalCancelBtn = document.getElementById("pModalCancelBtn");
+const pModalConfirmBtn = document.getElementById("pModalConfirmBtn");
+const pMAction = document.getElementById("pMAction");
+const pMChild = document.getElementById("pMChild");
+const pMGuardian = document.getElementById("pMGuardian");
+const pMTime = document.getElementById("pMTime");
+const pMNotes = document.getElementById("pMNotes");
+
+const staffApproveModal = document.getElementById("staffApproveModal");
+const sModalCloseBtn = document.getElementById("sModalCloseBtn");
+const sModalRejectBtn = document.getElementById("sModalRejectBtn");
+const sModalApproveBtn = document.getElementById("sModalApproveBtn");
+const sMAction = document.getElementById("sMAction");
+const sMChild = document.getElementById("sMChild");
+const sMGuardian = document.getElementById("sMGuardian");
+const sMReqTime = document.getElementById("sMReqTime");
+const sMConfTime = document.getElementById("sMConfTime");
+const sMNotes = document.getElementById("sMNotes");
+
+/* ===== State ===== */
+let session   = loadJSON(KEY_SESSION, { schoolName:"", className:"", staffName:"", staffPin:"123456" });
+let guardians = loadJSON(KEY_GUARDIANS, []);
+let children  = loadJSON(KEY_CHILDREN, []);
+let logs      = loadJSON(KEY_LOGS_TODAY(), []);
+let pending   = loadJSON(KEY_PENDING_TODAY(), []);
+let auth      = loadJSON(KEY_AUTH, null);
+
+let parentSelectedChildId = null;
+let parentPendingAction = null;
+let staffSelectedPendingId = null;
+
+/* ===== Views ===== */
+function showAuth(){ authView.classList.remove("hidden"); staffView.classList.add("hidden"); parentView.classList.add("hidden"); logoutBtn.classList.add("hidden"); subTitle.textContent="Welcome"; }
+function showStaff(){ authView.classList.add("hidden"); staffView.classList.remove("hidden"); parentView.classList.add("hidden"); logoutBtn.classList.remove("hidden"); subTitle.textContent="Staff"; }
+function showParent(){ authView.classList.add("hidden"); staffView.classList.add("hidden"); parentView.classList.remove("hidden"); logoutBtn.classList.remove("hidden"); subTitle.textContent="Parent"; }
+
+function updateParentHeader(){
+  parentHeaderInfo.textContent = [session.schoolName, session.className].filter(Boolean).join(" • ");
+}
+
+/* ===== Staff lockout ===== */
+function getStaffLock(){ return loadJSON(KEY_STAFF_LOCK, { until: 0, fails: 0 }); }
+function setStaffLock(obj){ saveJSON(KEY_STAFF_LOCK, obj); }
+function updateLockMsg(){
+  const lock=getStaffLock(); const now=Date.now();
+  if(lock.until && lock.until>now){
+    const sec=Math.ceil((lock.until-now)/1000);
+    staffLockMsg.classList.remove("hidden");
+    staffLockMsg.textContent = `Staff login locked. Try again in ${sec}s.`;
+  } else staffLockMsg.classList.add("hidden");
+}
+
+/* ===== Save / Safe input sync (fixes the “deleting letters” bug) ===== */
+function saveAll(){
+  saveJSON(KEY_SESSION, session);
+  saveJSON(KEY_GUARDIANS, guardians);
+  saveJSON(KEY_CHILDREN, children);
+  saveJSON(KEY_LOGS_TODAY(), logs);
+  saveJSON(KEY_PENDING_TODAY(), pending);
+  saveJSON(KEY_AUTH, auth);
+}
+function safeSetInput(el, value){
+  if(document.activeElement === el) return;     // don't overwrite while typing
+  el.value = value ?? "";
+}
+
+/* ===== PIN generation ===== */
+function gen4Pin(){
+  // 1000-9999
+  return String(Math.floor(1000 + Math.random() * 9000));
+}
+function normalizePhone(p){
+  return String(p || "").replace(/[^\d]/g, ""); // digits only
+}
+
+/* ===== Linking rules: max 2 parents per child ===== */
+function linkGuardianToChild(childId, guardianId){
+  children = children.map(c=>{
+    if(c.id !== childId) return c;
+    const set = new Set(c.guardianIds || []);
+    set.add(guardianId);
+    const arr = [...set];
+    if(arr.length > 2){
+      // keep first 2
+      return { ...c, guardianIds: arr.slice(0,2) };
+    }
+    return { ...c, guardianIds: arr };
+  });
+}
+
+/* ===== Parent view ===== */
+function latestActionForChild(childId){
+  const last = logs.find(l => l.childId === childId);
+  return last ? last.action : null;
+}
+function clearParentSelection(){
+  parentSelectedChildId = null;
+  pSelectedChild.textContent = "Select a child";
+  pSelectedStatus.textContent = "";
+  pNotes.value = "";
+}
+function renderParentKids(){
+  const gid = auth?.guardianId;
+  const g = guardians.find(x=>x.id===gid);
+  parentGuardianName.textContent = g ? `${g.name} (${g.phone})` : "";
+
+  const myKids = children.filter(c => (c.guardianIds||[]).includes(gid)).slice().sort((a,b)=>a.name.localeCompare(b.name));
+  if(!myKids.length){
+    parentKidsList.innerHTML = `<div class="p-4 text-white/60 text-sm">No linked children. Ask staff to link you.</div>`;
+  } else {
+    parentKidsList.innerHTML = myKids.map(c=>{
+      const st = latestActionForChild(c.id);
+      const pill = st==="DROP_OFF" ? "bg-emerald-400/10 border-emerald-200/20 text-emerald-50"
+                                  : "bg-indigo-400/10 border-indigo-200/20 text-indigo-50";
+      return `
+        <button data-kid="${escA(c.id)}" class="w-full text-left p-4 flex items-center justify-between gap-3 hover:bg-white/5 transition">
+          <div class="text-white font-semibold">${esc(c.name)}</div>
+          ${st ? `<span class="text-xs px-3 py-1 rounded-full border ${pill}">${st==="DROP_OFF"?"IN":"OUT"}</span>` : ``}
+        </button>
+      `;
+    }).join("");
+
+    [...parentKidsList.querySelectorAll("button[data-kid]")].forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-kid");
+        parentSelectedChildId = id;
+        const child = children.find(c=>c.id===id);
+        pSelectedChild.textContent = child?.name || "Select a child";
+        const st = latestActionForChild(id);
+        pSelectedStatus.textContent = st ? `Status: ${st==="DROP_OFF"?"IN":"OUT"}` : "";
+        setStatus("Child selected.", "ok");
+      });
+    });
+  }
+
+  const myPending = pending.filter(p => p.guardianId === gid);
+  parentPendingList.innerHTML = myPending.length
+    ? myPending.slice(0,8).map(p=>`<div class="text-white/85">• ${esc(p.childName)} — ${p.action==="DROP_OFF"?"Drop-off":"Pick-up"} (waiting)</div>`).join("")
+    : "None";
+}
+
+/* ===== Staff lists ===== */
+function renderGuardianList(){
+  if(!guardians.length){
+    guardianList.innerHTML = `<div class="p-4 text-white/60 text-sm">No parents</div>`;
+    return;
+  }
+  guardians.sort((a,b)=>a.name.localeCompare(b.name));
+  guardianList.innerHTML = guardians.map(g=>`
+    <div class="p-3 border-b border-white/5">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <div class="text-white font-semibold">${esc(g.name)}</div>
+          <div class="text-white/60 text-xs">${esc(g.phone)}</div>
+        </div>
+        <div class="flex gap-2">
+          <button data-copy="${escA(g.id)}"
+            class="text-xs px-3 py-2 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
+            Copy PIN
+          </button>
+          <button data-delg="${escA(g.id)}"
+            class="text-xs px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+            Remove
+          </button>
+        </div>
+      </div>
+      <div class="mt-2 text-xs text-white/70">
+        Login PIN: <span class="font-semibold text-white">${esc(g.pin)}</span>
+      </div>
+    </div>
+  `).join("");
+
+  [...guardianList.querySelectorAll("button[data-delg]")].forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const id = btn.getAttribute("data-delg");
+      if(!confirm("Remove parent?")) return;
+      guardians = guardians.filter(x=>x.id!==id);
+      children = children.map(c=>({ ...c, guardianIds:(c.guardianIds||[]).filter(gid=>gid!==id) }));
+      pending = pending.filter(p=>p.guardianId!==id);
+      saveAll(); renderAll();
+      setStatus("Parent removed.", "info");
+    });
+  });
+
+  [...guardianList.querySelectorAll("button[data-copy]")].forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const id = btn.getAttribute("data-copy");
+      const g = guardians.find(x=>x.id===id);
+      if(!g) return;
+      const text = `Parent Login PIN for ${g.name} (${g.phone}): ${g.pin}`;
+      try { await navigator.clipboard.writeText(text); setStatus("Copied to clipboard.", "ok"); }
+      catch { setStatus("Copy failed (browser restriction).", "err"); }
+    });
+  });
+}
+
+function renderChildAdminList(){
+  if(!children.length){
+    childAdminList.innerHTML = `<div class="p-4 text-white/60 text-sm">No children</div>`;
+    return;
+  }
+  const nameById = new Map(guardians.map(g=>[g.id, `${g.name} (${g.phone})`]));
+  children.sort((a,b)=>a.name.localeCompare(b.name));
+  childAdminList.innerHTML = children.map(c=>{
+    const linked = (c.guardianIds||[]).map(id=>nameById.get(id)).filter(Boolean);
+    return `
+      <div class="p-3 border-b border-white/5 flex items-start justify-between gap-3">
+        <div>
+          <div class="text-white font-semibold">${esc(c.name)}</div>
+          <div class="text-white/60 text-xs mt-1">
+            ${linked.length ? linked.map(x=>`• ${esc(x)}`).join("<br/>") : "No linked parents"}
+          </div>
+        </div>
+        <button data-delc="${escA(c.id)}"
+          class="text-xs px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+          Remove
+        </button>
+      </div>
+    `;
+  }).join("");
+
+  [...childAdminList.querySelectorAll("button[data-delc]")].forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const id = btn.getAttribute("data-delc");
+      if(!confirm("Remove child?")) return;
+      children = children.filter(x=>x.id!==id);
+      pending = pending.filter(p=>p.childId!==id);
+      if(parentSelectedChildId===id) clearParentSelection();
+      saveAll(); renderAll();
+      setStatus("Child removed.", "info");
+    });
+  });
+}
+
+function renderLinkDropdowns(){
+  linkChildSelect.innerHTML = `<option value="">Select child…</option>` +
+    children.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${escA(c.id)}">${esc(c.name)}</option>`).join("");
+
+  linkGuardianSelect.innerHTML = `<option value="">Select parent…</option>` +
+    guardians.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(g=>`<option value="${escA(g.id)}">${esc(g.name)} (${esc(g.phone)})</option>`).join("");
+
+  linkSummary.textContent = `${children.length} children • ${guardians.length} parents • max 2 parents per child`;
+}
+
+/* ===== Pending + Logs ===== */
+function renderPending(){
+  pendingCount.textContent = `${pending.length} pending`;
+  if(!pending.length){
+    pendingList.innerHTML = `<div class="p-4 text-white/60 text-sm">No pending requests</div>`;
+    return;
+  }
+  pendingList.innerHTML = pending.map(p=>{
+    const pill = p.action==="DROP_OFF" ? "bg-emerald-400/10 border-emerald-200/20 text-emerald-50"
+                                      : "bg-indigo-400/10 border-indigo-200/20 text-indigo-50";
+    return `
+      <div class="p-4 border-b border-white/5 flex items-start justify-between gap-3">
+        <div>
+          <div class="text-white font-semibold">${esc(p.childName)}</div>
+          <div class="mt-1 text-white/70 text-sm">
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs border ${pill}">
+              ${p.action==="DROP_OFF"?"Drop-off":"Pick-up"}
+            </span>
+            <span class="ml-2">${esc(p.guardianName)} (${esc(p.guardianPhone)})</span>
+          </div>
+          <div class="mt-1 text-white/60 text-xs">Parent time: ${esc(p.requestedAt)}</div>
+        </div>
+        <button data-approve="${escA(p.id)}"
+          class="px-4 py-2 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
+          Review
+        </button>
+      </div>
+    `;
+  }).join("");
+
+  [...pendingList.querySelectorAll("button[data-approve]")].forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const id = btn.getAttribute("data-approve");
+      openStaffApproveModal(id);
+    });
+  });
+}
+
+function renderLogs(){
+  logCount.textContent = `${logs.length} entries`;
+  if(!logs.length){
+    logTbody.innerHTML = `<tr><td class="px-4 py-6 text-white/60" colspan="7">No entries yet today.</td></tr>`;
+    return;
+  }
+  logTbody.innerHTML = logs.map(r=>{
+    const pill = r.action==="DROP_OFF" ? "bg-emerald-400/10 border-emerald-200/20 text-emerald-50"
+                                      : "bg-indigo-400/10 border-indigo-200/20 text-indigo-50";
+    return `
+      <tr class="hover:bg-white/5 transition">
+        <td class="px-4 py-3 whitespace-nowrap">${esc(r.parentTime)}</td>
+        <td class="px-4 py-3 whitespace-nowrap">${esc(r.staffTime)}</td>
+        <td class="px-4 py-3">
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs border ${pill}">
+            ${r.action==="DROP_OFF"?"Drop-off":"Pick-up"}
+          </span>
+        </td>
+        <td class="px-4 py-3">${esc(r.childName)}</td>
+        <td class="px-4 py-3">${esc(r.guardianName)} (${esc(r.guardianPhone)})</td>
+        <td class="px-4 py-3 max-w-[260px] truncate" title="${escA(r.notes||"")}">${esc(r.notes||"")}</td>
+        <td class="px-4 py-3">${esc(r.staffName||"")}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+/* ===== Parent request modal ===== */
+function openParentConfirmModal(action){
+  if(!auth || auth.role!=="parent") return setStatus("Login as parent.", "err");
+  if(!parentSelectedChildId) return setStatus("Select a child.", "err");
+
+  const g = guardians.find(x=>x.id===auth.guardianId);
+  const c = children.find(x=>x.id===parentSelectedChildId);
+  if(!g || !c) return setStatus("Missing data.", "err");
+  if(!(c.guardianIds||[]).includes(g.id)) return setStatus("Not authorized for this child.", "err");
+
+  // block duplicates
+  if(pending.find(p=>p.childId===c.id && p.guardianId===g.id && p.action===action)) return setStatus("You already have a pending request.", "err");
+  const last = logs.find(l=>l.childId===c.id);
+  if(last && last.action===action) return setStatus("Already recorded.", "err");
+
+  parentPendingAction = action;
+
+  pMAction.textContent = action==="DROP_OFF" ? "Drop-off" : "Pick-up";
+  pMChild.textContent = c.name;
+  pMGuardian.textContent = `${g.name} (${g.phone})`;
+  pMTime.textContent = nowLocal();
+  pMNotes.textContent = pNotes.value.trim() || "-";
+
+  parentConfirmModal.classList.remove("hidden");
+}
+function closeParentModal(){ parentConfirmModal.classList.add("hidden"); parentPendingAction=null; }
+
+function commitPending(){
+  const action = parentPendingAction;
+  if(!action) return;
+
+  const g = guardians.find(x=>x.id===auth.guardianId);
+  const c = children.find(x=>x.id===parentSelectedChildId);
+
+  pending.unshift({
+    id: makeId("PEND"),
+    date: todayKey(),
+    action,
+    guardianId: g.id,
+    guardianName: g.name,
+    guardianPhone: g.phone,
+    childId: c.id,
+    childName: c.name,
+    notes: pNotes.value.trim(),
+    requestedAt: nowLocal()
+  });
+
+  pNotes.value = "";
+  saveAll(); renderAll();
+  setStatus("Request sent to staff.", "ok");
+  closeParentModal();
+}
+
+/* ===== Staff approve modal ===== */
+function openStaffApproveModal(pendingId){
+  const req = pending.find(p=>p.id===pendingId);
+  if(!req) return;
+  staffSelectedPendingId = pendingId;
+
+  sMAction.textContent = req.action==="DROP_OFF" ? "Drop-off" : "Pick-up";
+  sMChild.textContent = req.childName;
+  sMGuardian.textContent = `${req.guardianName} (${req.guardianPhone})`;
+  sMReqTime.textContent = req.requestedAt;
+  sMConfTime.textContent = nowLocal();
+  sMNotes.textContent = req.notes || "-";
+
+  staffApproveModal.classList.remove("hidden");
+}
+function closeStaffModal(){ staffApproveModal.classList.add("hidden"); staffSelectedPendingId=null; }
+
+function staffReject(){
+  if(!staffSelectedPendingId) return;
+  pending = pending.filter(p=>p.id!==staffSelectedPendingId);
+  saveAll(); renderAll();
+  setStatus("Request rejected.", "info");
+  closeStaffModal();
+}
+function staffApprove(){
+  if(!staffSelectedPendingId) return;
+  if(!session.staffName || !session.staffName.trim()) return setStatus("Set 'Staff on duty' in settings.", "err");
+
+  const req = pending.find(p=>p.id===staffSelectedPendingId);
+  if(!req) return;
+
+  logs.unshift({
+    date: todayKey(),
+    action: req.action,
+    childId: req.childId,
+    childName: req.childName,
+    guardianId: req.guardianId,
+    guardianName: req.guardianName,
+    guardianPhone: req.guardianPhone,
+    notes: req.notes,
+    parentTime: req.requestedAt,
+    staffTime: nowLocal(),
+    staffName: session.staffName
+  });
+
+  pending = pending.filter(p=>p.id!==staffSelectedPendingId);
+
+  saveAll(); renderAll();
+  setStatus("Approved and logged.", "ok");
+  closeStaffModal();
+}
+
+/* ===== End-of-day: archive + clear ===== */
+function snapshotSetup(){
+  // setup snapshot = session + guardians + children (NOT logs)
+  const snap = {
+    savedAt: nowLocal(),
+    session: { ...session },
+    guardians: JSON.parse(JSON.stringify(guardians)),
+    children: JSON.parse(JSON.stringify(children))
+  };
+  saveJSON(KEY_LAST_SETUP, snap);
+}
+function archiveAndClearToday(){
+  // store logs to archive
+  const archive = loadJSON(KEY_ARCHIVE, []);
+  archive.unshift({ date: todayKey(), exportedAt: nowLocal(), logs: JSON.parse(JSON.stringify(logs)) });
+  saveJSON(KEY_ARCHIVE, archive);
+
+  // also snapshot setup for “copy last”
+  snapshotSetup();
+
+  // clear today's operational records
+  logs = [];
+  pending = [];
+  saveAll();
+  renderAll();
+}
+
+/* ===== Copy last setup ===== */
+function copyLastSetup(){
+  const snap = loadJSON(KEY_LAST_SETUP, null);
+  if(!snap) return setStatus("No saved setup found yet. Export once to create it.", "err");
+
+  session = { ...session, ...snap.session }; // keep current pin unless overwritten
+  guardians = JSON.parse(JSON.stringify(snap.guardians || []));
+  children  = JSON.parse(JSON.stringify(snap.children  || []));
+
+  saveAll(); renderAll();
+  setStatus("Last setup copied. You can edit as needed.", "ok");
+}
+
+/* ===== Render All ===== */
+function renderAll(){
+  // reload daily keys (important when date changes)
+  logs = loadJSON(KEY_LOGS_TODAY(), logs);
+  pending = loadJSON(KEY_PENDING_TODAY(), pending);
+
+  // safe-set inputs (fix typing deletion)
+  safeSetInput(schoolName, session.schoolName);
+  safeSetInput(className, session.className);
+  safeSetInput(staffName, session.staffName);
+
+  updateParentHeader();
+  renderGuardianList();
+  renderChildAdminList();
+  renderLinkDropdowns();
+  renderPending();
+  renderLogs();
+  if(auth?.role==="parent") renderParentKids();
+  updateLockMsg();
+}
+
+/* ===== Events ===== */
+logoutBtn.addEventListener("click", ()=>{
+  auth = null;
+  saveAll();
+  showAuth();
+  clearParentSelection();
+  setStatus("Logged out.", "info");
+});
+
+refreshBtn.addEventListener("click", ()=>{
+  renderAll();
+  setStatus("Refreshed.", "info");
+});
+
+copyLastSetupBtn.addEventListener("click", ()=>{
+  if(!confirm("Copy last setup (settings + parents + children + links)?")) return;
+  copyLastSetup();
+});
+
+/* Staff login */
+staffLoginBtn.addEventListener("click", ()=>{
+  const lock = getStaffLock(); const now = Date.now();
+  if(lock.until && lock.until>now) return updateLockMsg();
+
+  const pin = staffPinInput.value.trim();
+  if(pin !== (session.staffPin || "123456")){
+    const nextFails = (lock.fails||0)+1;
+    let until=0;
+    if(nextFails>=5) until = Date.now() + 60_000;
+    setStaffLock({ fails: nextFails>=5 ? 0 : nextFails, until });
+    setStatus("Invalid staff PIN.", "err");
+    updateLockMsg();
+    return;
+  }
+  setStaffLock({ fails:0, until:0 });
+  auth = { role:"staff" };
+  staffPinInput.value = "";
+  saveAll();
+  showStaff();
+  setStatus("Welcome, staff.", "ok");
+});
+
+/* Parent login (phone + pin) */
+guardianLoginBtn.addEventListener("click", ()=>{
+  const phone = normalizePhone(guardianPhoneInput.value);
+  const pin   = guardianPinInput.value.trim();
+
+  if(!phone) return setStatus("Enter your phone number.", "err");
+  if(!pin) return setStatus("Enter your PIN.", "err");
+
+  const g = guardians.find(x => normalizePhone(x.phone) === phone);
+  if(!g) return setStatus("Phone not found. Ask staff to add your number.", "err");
+  if(pin !== g.pin) return setStatus("Invalid PIN.", "err");
+
+  auth = { role:"parent", guardianId: g.id };
+  guardianPhoneInput.value = "";
+  guardianPinInput.value = "";
+  saveAll();
+  showParent();
+  clearParentSelection();
+  renderAll();
+  setStatus("Welcome.", "ok");
+});
+
+/* Save session */
+saveSessionBtn.addEventListener("click", ()=>{
+  session.schoolName = schoolName.value.trim();
+  session.className  = className.value.trim();
+  session.staffName  = staffName.value.trim();
+  saveAll(); renderAll();
+  setStatus("Saved.", "ok");
+});
+
+changeStaffPinBtn.addEventListener("click", ()=>{
+  const pin = newStaffPin.value.trim();
+  if(!pin || pin.length < 6) return setStatus("Staff PIN must be 6+ digits.", "err");
+  session.staffPin = pin;
+  newStaffPin.value = "";
+  saveAll();
+  setStatus("Staff PIN updated.", "ok");
+});
+
+/* Clear today */
+clearTodayBtn.addEventListener("click", ()=>{
+  if(!confirm("Clear today’s log and pending requests?")) return;
+  snapshotSetup();
+  logs = [];
+  pending = [];
+  saveAll(); renderAll();
+  setStatus("Cleared.", "ok");
+});
+
+/* Add parent (auto pin) */
+addGuardianBtn.addEventListener("click", ()=>{
+  const name = newGuardianName.value.trim();
+  const phoneRaw = newGuardianPhone.value.trim();
+  const phone = normalizePhone(phoneRaw);
+
+  if(!name) return setStatus("Enter parent name.", "err");
+  if(!phone) return setStatus("Enter a valid phone number.", "err");
+  if(guardians.some(g => normalizePhone(g.phone) === phone)) return setStatus("Phone already exists.", "err");
+
+  let pin = gen4Pin();
+  // avoid collisions
+  for(let i=0;i<10;i++){
+    if(!guardians.some(g=>g.pin===pin)) break;
+    pin = gen4Pin();
+  }
+
+  guardians.push({ id: makeId("G"), name, phone: phoneRaw, pin });
+  newGuardianName.value = "";
+  newGuardianPhone.value = "";
+  saveAll(); renderAll();
+  setStatus(`Parent added. PIN: ${pin}`, "ok");
+});
+
+/* Add child */
+addChildBtn.addEventListener("click", ()=>{
+  const name = newChildName.value.trim();
+  if(!name) return setStatus("Enter child name.", "err");
+  children.push({ id: makeId("C"), name, guardianIds: [] });
+  newChildName.value = "";
+  saveAll(); renderAll();
+  setStatus("Child added.", "ok");
+});
+
+/* Link (max 2) */
+linkBtn.addEventListener("click", ()=>{
+  const cid = linkChildSelect.value;
+  const gid = linkGuardianSelect.value;
+  if(!cid || !gid) return setStatus("Select child and parent.", "err");
+
+  const child = children.find(c=>c.id===cid);
+  if(!child) return;
+
+  const current = child.guardianIds || [];
+  if(current.includes(gid)) return setStatus("Already linked.", "info");
+  if(current.length >= 2) return setStatus("This child already has 2 linked parents.", "err");
+
+  linkGuardianToChild(cid, gid);
+  saveAll(); renderAll();
+  setStatus("Linked.", "ok");
+});
+
+/* Parent actions */
+clearParentSelectionBtn.addEventListener("click", clearParentSelection);
+dropOffReqBtn.addEventListener("click", ()=>openParentConfirmModal("DROP_OFF"));
+pickUpReqBtn.addEventListener("click", ()=>openParentConfirmModal("PICK_UP"));
+
+pModalCloseBtn.addEventListener("click", closeParentModal);
+pModalCancelBtn.addEventListener("click", closeParentModal);
+parentConfirmModal.addEventListener("click", (e)=>{ if(e.target===parentConfirmModal) closeParentModal(); });
+pModalConfirmBtn.addEventListener("click", commitPending);
+
+/* Staff approve actions */
+sModalCloseBtn.addEventListener("click", closeStaffModal);
+staffApproveModal.addEventListener("click", (e)=>{ if(e.target===staffApproveModal) closeStaffModal(); });
+sModalRejectBtn.addEventListener("click", staffReject);
+sModalApproveBtn.addEventListener("click", staffApprove);
+
+/* Export & clear */
+exportCsvBtn.addEventListener("click", ()=>{
+  if(!logs.length) return setStatus("No logs to export.", "err");
+  const headers = ["date","parentTime","staffTime","action","schoolName","className","childName","guardianName","guardianPhone","notes","staffName"];
+  const csvEscape = v => `"${String(v ?? "").replaceAll('"','""')}"`;
+  const rows = logs.slice().reverse().map(r => headers.map(h => csvEscape(
+    h==="schoolName" ? session.schoolName :
+    h==="className"  ? session.className  :
+    r[h]
+  )));
+  const csv = [headers.join(","), ...rows.map(r=>r.join(","))].join("\n");
+  const blob = new Blob([csv], { type:"text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href=url; a.download=`daily_log_${todayKey()}.csv`; a.click();
+  URL.revokeObjectURL(url);
+
+  archiveAndClearToday();
+  setStatus("CSV exported and cleared for next day.", "ok");
+});
+
+exportPdfBtn.addEventListener("click", ()=>{
+  if(!logs.length) return setStatus("No logs to export.", "err");
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:"pt", format:"letter" });
+  const margin=40; let y=52;
+
+  doc.setFont("helvetica","bold"); doc.setFontSize(16);
+  doc.text(`${session.schoolName || "School"} — Daily Drop-off & Pick-up Log`, margin, y);
+
+  doc.setFont("helvetica","normal"); doc.setFontSize(11);
+  y+=20; doc.text(`Date: ${todayKey()}    Classroom: ${session.className || ""}`, margin, y);
+  y+=16; doc.text(`Staff on duty: ${session.staffName || ""}    Generated: ${nowLocal()}`, margin, y);
+  y+=18;
+
+  const body = logs.slice().reverse().map(r => ([
+    r.parentTime, r.staffTime,
+    r.action==="DROP_OFF" ? "Drop-off" : "Pick-up",
+    r.childName,
+    `${r.guardianName} (${r.guardianPhone})`,
+    (r.notes||"").slice(0,90),
+    r.staffName || ""
+  ]));
+
+  doc.autoTable({
+    startY: y,
+    head: [["Parent Time","Staff Confirm Time","Action","Child","Parent","Notes","Staff"]],
+    body,
+    theme: "grid",
+    styles: { font:"helvetica", fontSize: 8.5, cellPadding: 4, overflow:"linebreak" },
+    headStyles: { fillColor: [20,20,20], textColor: 255 },
+    margin: { left: margin, right: margin },
+    columnStyles: { 0:{cellWidth:88}, 1:{cellWidth:88}, 2:{cellWidth:60}, 3:{cellWidth:90}, 4:{cellWidth:120}, 5:{cellWidth:110}, 6:{cellWidth:55} }
+  });
+
+  doc.save(`daily_log_${todayKey()}.pdf`);
+
+  archiveAndClearToday();
+  setStatus("PDF exported and cleared for next day.", "ok");
+});
+
+/* Boot */
+function boot(){
+  renderAll();
+  auth = loadJSON(KEY_AUTH, null);
+  if(auth?.role==="staff") showStaff();
+  else if(auth?.role==="parent"){ showParent(); renderAll(); }
+  else showAuth();
+  updateParentHeader();
+}
+boot();
+</script>
+</body>
+</html>
