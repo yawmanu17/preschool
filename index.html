@@ -60,7 +60,7 @@
           </div>
           <div>
             <h1 class="text-white text-lg md:text-xl font-semibold tracking-tight">Check-In / Out</h1>
-            <p class="text-white/70 text-xs md:text-sm" id="subTitle">Sign in</p>
+            <p class="text-white/70 text-xs md:text-sm" id="subTitle">Choose role</p>
           </div>
         </div>
 
@@ -86,94 +86,109 @@
       <div id="statusMsg" class="rounded-2xl border px-4 py-3 text-sm"></div>
     </div>
 
-    <!-- AUTH -->
-    <section id="authView" class="grid lg:grid-cols-2 gap-6">
-      <!-- Staff -->
-      <div class="rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card">
-        <div class="p-6">
-          <div class="flex items-center justify-between">
-            <h2 class="text-white font-semibold text-lg">Staff</h2>
-            <span class="text-xs px-3 py-1 rounded-full bg-cyan-400/10 border border-cyan-200/20 text-cyan-50">Admin</span>
-          </div>
-
-          <div class="mt-4 space-y-3">
-            <input id="staffSchoolCode" autocomplete="off"
-              class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                     focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
-              placeholder="School code"/>
-
-            <input id="staffEmail" type="email" autocomplete="username"
-              class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                     focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
-              placeholder="Email"/>
-
-            <input id="staffPassword" type="password" autocomplete="current-password"
-              class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                     focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
-              placeholder="Password"/>
-
-            <button id="staffLoginBtn"
-              class="w-full px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
-              Login
-            </button>
-
-            <button id="staffCreateBtn"
-              class="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
-              Create staff account
-            </button>
-
-            <div class="text-white/60 text-xs">
-              After creating, admin must allow-list your UID under <b>schools/{code}/staff/{uid}</b>.
-            </div>
-          </div>
+    <!-- ROLE SELECT -->
+    <section id="roleSelectView" class="max-w-xl mx-auto">
+      <div class="rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card p-6">
+        <div class="text-white text-lg font-semibold">Continue as</div>
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button id="goStaffBtn" class="px-4 py-4 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
+            👩‍🏫 Staff
+          </button>
+          <button id="goParentBtn" class="px-4 py-4 rounded-2xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition">
+            👨‍👩‍👧 Parent
+          </button>
+        </div>
+        <div class="mt-4 text-white/60 text-xs">
+          Staff: Email/Password • Parent: SMS Code (OTP)
         </div>
       </div>
+    </section>
 
-      <!-- Parent -->
-      <div class="rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card">
-        <div class="p-6">
-          <div class="flex items-center justify-between">
-            <h2 class="text-white font-semibold text-lg">Parent</h2>
-            <span class="text-xs px-3 py-1 rounded-full bg-indigo-400/10 border border-indigo-200/20 text-indigo-50">Guardian</span>
-          </div>
+    <!-- STAFF LOGIN VIEW -->
+    <section id="staffLoginView" class="hidden max-w-xl mx-auto">
+      <div class="rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card p-6">
+        <div class="flex items-center justify-between">
+          <div class="text-white text-lg font-semibold">Staff Login</div>
+          <button id="backFromStaffBtn" class="text-white/70 hover:text-white text-sm">← Back</button>
+        </div>
 
-          <div class="mt-4 space-y-3">
-            <input id="parentSchoolCode" autocomplete="off"
-              class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                     focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
-              placeholder="School code"/>
+        <div class="mt-4 space-y-3">
+          <input id="staffSchoolCode" autocomplete="off"
+            class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                   focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
+            placeholder="School code"/>
 
-            <div id="recaptcha-container" class="rounded-2xl overflow-hidden"></div>
+          <input id="staffEmail" type="email" autocomplete="username"
+            class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                   focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
+            placeholder="Email"/>
 
-            <input id="parentPhone" inputmode="tel" autocomplete="tel"
-              class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                     focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
-              placeholder="+1XXXXXXXXXX"/>
+          <input id="staffPassword" type="password" autocomplete="current-password"
+            class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                   focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
+            placeholder="Password"/>
 
-            <button id="sendOtpBtn"
-              class="w-full px-4 py-3 rounded-2xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition">
-              Send code
-            </button>
+          <button id="staffLoginBtn"
+            class="w-full px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
+            Login
+          </button>
 
-            <input id="otpCode" inputmode="numeric"
-              class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                     focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
-              placeholder="6-digit code"/>
+          <button id="staffCreateBtn"
+            class="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+            Create staff account
+          </button>
 
-            <button id="verifyOtpBtn"
-              class="w-full px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
-              Verify & Login
-            </button>
-
-            <div class="text-white/60 text-xs">
-              You’ll see only children linked to your phone.
-            </div>
+          <div class="text-white/60 text-xs">
+            After creating, admin must allow-list your UID at <b>schools/{code}/staff/{uid}</b>.
           </div>
         </div>
       </div>
     </section>
 
-    <!-- PARENT -->
+    <!-- PARENT LOGIN VIEW -->
+    <section id="parentLoginView" class="hidden max-w-xl mx-auto">
+      <div class="rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card p-6">
+        <div class="flex items-center justify-between">
+          <div class="text-white text-lg font-semibold">Parent Login</div>
+          <button id="backFromParentBtn" class="text-white/70 hover:text-white text-sm">← Back</button>
+        </div>
+
+        <div class="mt-4 space-y-3">
+          <input id="parentSchoolCode" autocomplete="off"
+            class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                   focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
+            placeholder="School code"/>
+
+          <div id="recaptcha-container" class="rounded-2xl overflow-hidden"></div>
+
+          <input id="parentPhone" inputmode="tel" autocomplete="tel"
+            class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                   focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
+            placeholder="+1XXXXXXXXXX"/>
+
+          <button id="sendOtpBtn"
+            class="w-full px-4 py-3 rounded-2xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition">
+            Send code
+          </button>
+
+          <input id="otpCode" inputmode="numeric"
+            class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                   focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
+            placeholder="6-digit code"/>
+
+          <button id="verifyOtpBtn"
+            class="w-full px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
+            Verify & Login
+          </button>
+
+          <div class="text-white/60 text-xs">
+            You will only see children linked to your phone.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PARENT DASHBOARD -->
     <section id="parentView" class="hidden space-y-6">
       <div class="rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card">
         <div class="p-6 md:p-7">
@@ -238,7 +253,7 @@
       </div>
     </section>
 
-    <!-- STAFF -->
+    <!-- STAFF DASHBOARD -->
     <section id="staffView" class="hidden space-y-6">
       <div class="rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card">
         <div class="p-6 md:p-7">
@@ -474,7 +489,7 @@ try { firebase.analytics(); } catch(e) {}
 
 const AUTH = firebase.auth();
 const DB   = firebase.firestore();
-DB.enableNetwork().catch(()=>{}); // helps recover if previously offline
+DB.enableNetwork().catch(()=>{}); // recover if previously offline
 
 /* ================= Helpers ================= */
 const pad2 = n => String(n).padStart(2,"0");
@@ -482,7 +497,8 @@ const todayKey = () => { const d=new Date(); return `${d.getFullYear()}-${pad2(d
 const nowLocal = () => { const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`; };
 const esc = s => String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
 const escA = s => esc(s).replaceAll("\n"," ");
-const makeId = p => p + "_" + Math.random().toString(16).slice(2) + Date.now().toString(16);
+function normalizeE164(p){ return String(p||"").trim().replace(/\s+/g,""); }
+function isE164(p){ return /^\+\d{8,15}$/.test(p); }
 
 function setStatus(msg, type="info") {
   statusWrap.classList.remove("hidden");
@@ -496,27 +512,26 @@ function setStatus(msg, type="info") {
   statusMsg.textContent = msg;
 }
 
-function normalizeE164(p){
-  // basic E.164 check: + followed by 8-15 digits
-  const s = String(p||"").trim().replace(/\s+/g,"");
-  return s;
-}
-function isE164(p){
-  return /^\+\d{8,15}$/.test(p);
-}
-
 /* ================= DOM ================= */
 const schoolBadge = document.getElementById("schoolBadge");
 const subTitle = document.getElementById("subTitle");
 const logoutBtn = document.getElementById("logoutBtn");
 const offlineBar = document.getElementById("offlineBar");
-
 const statusWrap = document.getElementById("statusWrap");
 const statusMsg  = document.getElementById("statusMsg");
 
-const authView   = document.getElementById("authView");
+/* Views */
+const roleSelectView = document.getElementById("roleSelectView");
+const staffLoginView = document.getElementById("staffLoginView");
+const parentLoginView = document.getElementById("parentLoginView");
 const staffView  = document.getElementById("staffView");
 const parentView = document.getElementById("parentView");
+
+/* Role buttons */
+const goStaffBtn = document.getElementById("goStaffBtn");
+const goParentBtn = document.getElementById("goParentBtn");
+const backFromStaffBtn = document.getElementById("backFromStaffBtn");
+const backFromParentBtn = document.getElementById("backFromParentBtn");
 
 /* Auth */
 const staffSchoolCode = document.getElementById("staffSchoolCode");
@@ -618,28 +633,52 @@ let APP = {
 const LS_SCHOOL = "PRESCHOOL_SCHOOL_CODE";
 
 /* ================= Views ================= */
-function showAuth(){
-  authView.classList.remove("hidden");
+function hideAll(){
+  roleSelectView.classList.add("hidden");
+  staffLoginView.classList.add("hidden");
+  parentLoginView.classList.add("hidden");
   staffView.classList.add("hidden");
   parentView.classList.add("hidden");
-  logoutBtn.classList.add("hidden");
-  subTitle.textContent = "Sign in";
 }
-function showStaff(){
-  authView.classList.add("hidden");
+function showRole(){
+  hideAll();
+  roleSelectView.classList.remove("hidden");
+  logoutBtn.classList.add("hidden");
+  subTitle.textContent = "Choose role";
+}
+function showStaffLogin(){
+  hideAll();
+  staffLoginView.classList.remove("hidden");
+  logoutBtn.classList.add("hidden");
+  subTitle.textContent = "Staff login";
+}
+function showParentLogin(){
+  hideAll();
+  parentLoginView.classList.remove("hidden");
+  logoutBtn.classList.add("hidden");
+  subTitle.textContent = "Parent login";
+}
+function showStaffDash(){
+  hideAll();
   staffView.classList.remove("hidden");
-  parentView.classList.add("hidden");
   logoutBtn.classList.remove("hidden");
   subTitle.textContent = "Staff";
 }
-function showParent(){
-  authView.classList.add("hidden");
-  staffView.classList.add("hidden");
+function showParentDash(){
+  hideAll();
   parentView.classList.remove("hidden");
   logoutBtn.classList.remove("hidden");
   subTitle.textContent = "Parent";
 }
 
+/* ================= Offline banner ================= */
+function updateOfflineUI(){
+  offlineBar.classList.toggle("hidden", navigator.onLine);
+}
+window.addEventListener("online", updateOfflineUI);
+window.addEventListener("offline", updateOfflineUI);
+
+/* ================= School code ================= */
 function setSchoolCode(code){
   const c = String(code||"").trim().toUpperCase();
   APP.schoolCode = c || null;
@@ -651,23 +690,14 @@ function setSchoolCode(code){
     schoolBadge.classList.add("hidden");
   }
 }
-
 function schoolRef(){
   if(!APP.schoolCode) throw new Error("Missing schoolCode");
   return DB.collection("schools").doc(APP.schoolCode);
 }
-
 function stopListeners(){
   APP.unsub.forEach(fn=>{ try{ fn(); }catch{} });
   APP.unsub = [];
 }
-
-/* ================= Offline banner ================= */
-function updateOfflineUI(){
-  offlineBar.classList.toggle("hidden", navigator.onLine);
-}
-window.addEventListener("online", updateOfflineUI);
-window.addEventListener("offline", updateOfflineUI);
 
 /* ================= OTP ================= */
 let confirmationResult = null;
@@ -695,6 +725,11 @@ async function assertStaffAllowListed(){
   if(!u) return false;
   const doc = await schoolRef().collection("staff").doc(u.uid).get();
   return doc.exists;
+}
+
+function safeSetInput(el, value){
+  if(document.activeElement === el) return;
+  el.value = value ?? "";
 }
 
 function bindSchoolDataForStaff(){
@@ -777,7 +812,6 @@ function bindSchoolDataForParent(){
       }, onSnapError)
   );
 
-  /* ✅ CORRECTION: parents may only read logs for their own guardianPhone */
   APP.unsub.push(
     sref.collection("logs")
       .where("date","==", todayKey())
@@ -788,11 +822,6 @@ function bindSchoolDataForParent(){
         renderParentKids();
       }, onSnapError)
   );
-}
-
-function safeSetInput(el, value){
-  if(document.activeElement === el) return;
-  el.value = value ?? "";
 }
 
 /* ================= Render ================= */
@@ -1206,7 +1235,6 @@ async function exportAndArchive(kind){
     logs: APP.logs.slice().reverse()
   }, { merge:true });
 
-  // clear today's pending + logs
   const batch = DB.batch();
   const pendSnap = await sref.collection("pending").get();
   pendSnap.forEach(d=>batch.delete(d.ref));
@@ -1241,34 +1269,31 @@ async function authStateReady(user){
     stopListeners();
     APP.role = null;
     APP.parentPhone = null;
-    showAuth();
+    showRole();
     return;
   }
-
-  setSchoolCode(APP.schoolCode || localStorage.getItem(LS_SCHOOL) || "");
 
   const email = APP.user.email || null;
   const phone = APP.user.phoneNumber || null;
 
   if(email){
-    // staff must be allow-listed
     try{
       const ok = await assertStaffAllowListed();
       if(!ok){
         await AUTH.signOut();
         setStatus("Staff not allow-listed for this school code.", "err");
-        showAuth();
+        showStaffLogin();
         return;
       }
       APP.role = "staff";
-      showStaff();
+      showStaffDash();
       bindSchoolDataForStaff();
       setStatus("Staff signed in.", "ok");
       return;
     } catch(e){
       console.error(e);
       setStatus("Cannot verify staff access. Check rules + allow-list.", "err");
-      showAuth();
+      showStaffLogin();
       return;
     }
   }
@@ -1276,7 +1301,7 @@ async function authStateReady(user){
   if(phone){
     APP.role = "parent";
     APP.parentPhone = phone;
-    showParent();
+    showParentDash();
     renderParentHeader();
     bindSchoolDataForParent();
     setStatus("Parent signed in.", "ok");
@@ -1284,16 +1309,22 @@ async function authStateReady(user){
   }
 
   await AUTH.signOut();
-  showAuth();
+  showRole();
   setStatus("Unsupported login type.", "err");
 }
 
-/* ================= Events ================= */
+/* ================= Role nav ================= */
+goStaffBtn.addEventListener("click", showStaffLogin);
+goParentBtn.addEventListener("click", showParentLogin);
+backFromStaffBtn.addEventListener("click", showRole);
+backFromParentBtn.addEventListener("click", showRole);
+
 logoutBtn.addEventListener("click", async ()=>{
   await AUTH.signOut();
   setStatus("Logged out.", "info");
 });
 
+/* ================= Events ================= */
 staffCreateBtn.addEventListener("click", async ()=>{
   try{
     const code = (staffSchoolCode.value||"").trim().toUpperCase();
@@ -1304,10 +1335,6 @@ staffCreateBtn.addEventListener("click", async ()=>{
     setSchoolCode(code);
 
     await AUTH.createUserWithEmailAndPassword(email, pass);
-    // create settings doc (staff cannot write unless allow-listed; this is fine to ignore if blocked)
-    try{
-      await schoolRef().collection("settings").doc("main").set({ schoolName:"", className:"", staffName:"" }, { merge:true });
-    } catch {}
     setStatus("Account created. Admin must allow-list your UID.", "ok");
   } catch(e){
     console.error(e);
@@ -1365,7 +1392,6 @@ saveSessionBtn.addEventListener("click", saveSettings);
 addGuardianBtn.addEventListener("click", addGuardian);
 addChildBtn.addEventListener("click", addChild);
 linkBtn.addEventListener("click", linkParentToChild);
-
 exportPdfBtn.addEventListener("click", ()=>exportAndArchive("pdf"));
 exportCsvBtn.addEventListener("click", ()=>exportAndArchive("csv"));
 clearTodayBtn.addEventListener("click", clearToday);
@@ -1374,7 +1400,6 @@ clearTodayBtn.addEventListener("click", clearToday);
 clearParentSelectionBtn.addEventListener("click", clearParentSelection);
 dropOffReqBtn.addEventListener("click", ()=>openParentConfirmModal("DROP_OFF"));
 pickUpReqBtn.addEventListener("click", ()=>openParentConfirmModal("PICK_UP"));
-
 pModalCloseBtn.addEventListener("click", closeParentModal);
 pModalCancelBtn.addEventListener("click", closeParentModal);
 parentConfirmModal.addEventListener("click", (e)=>{ if(e.target===parentConfirmModal) closeParentModal(); });
@@ -1389,14 +1414,12 @@ sModalApproveBtn.addEventListener("click", staffApprove);
 /* ================= Boot ================= */
 function boot(){
   updateOfflineUI();
-
   const saved = localStorage.getItem(LS_SCHOOL) || "";
   if(saved){
     staffSchoolCode.value = saved;
     parentSchoolCode.value = saved;
     setSchoolCode(saved);
   }
-
   AUTH.onAuthStateChanged((user)=>authStateReady(user));
 }
 boot();
