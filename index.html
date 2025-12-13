@@ -11,7 +11,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 
-  <!-- Firebase (compat for single-file HTML) -->
+  <!-- Firebase compat (single-file HTML) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -60,7 +60,7 @@
           </div>
           <div>
             <h1 class="text-white text-lg md:text-xl font-semibold tracking-tight">Check-In / Out</h1>
-            <p class="text-white/70 text-xs md:text-sm" id="subTitle">Choose role</p>
+            <p class="text-white/70 text-xs md:text-sm" id="subTitle">Welcome</p>
           </div>
         </div>
 
@@ -86,109 +86,117 @@
       <div id="statusMsg" class="rounded-2xl border px-4 py-3 text-sm"></div>
     </div>
 
-    <!-- ROLE SELECT -->
-    <section id="roleSelectView" class="max-w-xl mx-auto">
-      <div class="rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card p-6">
-        <div class="text-white text-lg font-semibold">Continue as</div>
-        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <button id="goStaffBtn" class="px-4 py-4 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
-            👩‍🏫 Staff
-          </button>
-          <button id="goParentBtn" class="px-4 py-4 rounded-2xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition">
-            👨‍👩‍👧 Parent
-          </button>
-        </div>
-        <div class="mt-4 text-white/60 text-xs">
-          Staff: Email/Password • Parent: SMS Code (OTP)
-        </div>
-      </div>
-    </section>
-
-    <!-- STAFF LOGIN VIEW -->
-    <section id="staffLoginView" class="hidden max-w-xl mx-auto">
-      <div class="rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card p-6">
-        <div class="flex items-center justify-between">
-          <div class="text-white text-lg font-semibold">Staff Login</div>
-          <button id="backFromStaffBtn" class="text-white/70 hover:text-white text-sm">← Back</button>
-        </div>
-
-        <div class="mt-4 space-y-3">
-          <input id="staffSchoolCode" autocomplete="off"
-            class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                   focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
-            placeholder="School code"/>
-
-          <input id="staffEmail" type="email" autocomplete="username"
-            class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                   focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
-            placeholder="Email"/>
-
-          <input id="staffPassword" type="password" autocomplete="current-password"
-            class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                   focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
-            placeholder="Password"/>
-
-          <button id="staffLoginBtn"
-            class="w-full px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
-            Login
-          </button>
-
-          <button id="staffCreateBtn"
-            class="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
-            Create staff account
-          </button>
-
-          <div class="text-white/60 text-xs">
-            After creating, admin must allow-list your UID at <b>schools/{code}/staff/{uid}</b>.
+    <!-- AUTH -->
+    <section id="authShell" class="space-y-6">
+      <!-- Role picker -->
+      <section id="rolePickView">
+        <div class="max-w-xl mx-auto rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card p-6">
+          <h2 class="text-white font-semibold text-lg">Continue as</h2>
+          <div class="mt-4 grid grid-cols-2 gap-3">
+            <button id="pickStaffBtn" class="px-4 py-4 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
+              👩‍🏫 Staff
+            </button>
+            <button id="pickParentBtn" class="px-4 py-4 rounded-2xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition">
+              👨‍👩‍👧 Parent
+            </button>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- PARENT LOGIN VIEW -->
-    <section id="parentLoginView" class="hidden max-w-xl mx-auto">
-      <div class="rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card p-6">
-        <div class="flex items-center justify-between">
-          <div class="text-white text-lg font-semibold">Parent Login</div>
-          <button id="backFromParentBtn" class="text-white/70 hover:text-white text-sm">← Back</button>
-        </div>
+      <section class="grid lg:grid-cols-2 gap-6">
+        <!-- Staff Auth -->
+        <div id="staffAuthCard" class="hidden rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card">
+          <div class="p-6">
+            <div class="flex items-center justify-between">
+              <h2 class="text-white font-semibold text-lg">Staff</h2>
+              <span class="text-xs px-3 py-1 rounded-full bg-cyan-400/10 border border-cyan-200/20 text-cyan-50">Admin</span>
+            </div>
 
-        <div class="mt-4 space-y-3">
-          <input id="parentSchoolCode" autocomplete="off"
-            class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                   focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
-            placeholder="School code"/>
+            <div class="mt-4 space-y-3">
+              <input id="staffSchoolCode" autocomplete="off"
+                class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                       focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
+                placeholder="School code"/>
 
-          <div id="recaptcha-container" class="rounded-2xl overflow-hidden"></div>
+              <input id="staffEmail" type="email" autocomplete="username"
+                class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                       focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
+                placeholder="Email"/>
 
-          <input id="parentPhone" inputmode="tel" autocomplete="tel"
-            class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                   focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
-            placeholder="+1XXXXXXXXXX"/>
+              <input id="staffPassword" type="password" autocomplete="current-password"
+                class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                       focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
+                placeholder="Password"/>
 
-          <button id="sendOtpBtn"
-            class="w-full px-4 py-3 rounded-2xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition">
-            Send code
-          </button>
+              <button id="staffLoginBtn"
+                class="w-full px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
+                Login
+              </button>
 
-          <input id="otpCode" inputmode="numeric"
-            class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                   focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
-            placeholder="6-digit code"/>
+              <button id="staffCreateBtn"
+                class="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+                Create staff account
+              </button>
 
-          <button id="verifyOtpBtn"
-            class="w-full px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
-            Verify & Login
-          </button>
+              <div class="text-white/60 text-xs">
+                After creating a staff account, the admin must allow-list your UID at:
+                <b>schools/{code}/staff/{uid}</b>
+              </div>
 
-          <div class="text-white/60 text-xs">
-            You will only see children linked to your phone.
+              <button id="backToRole1"
+                class="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+                ← Back
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+
+        <!-- Parent Auth (Email Link) -->
+        <div id="parentAuthCard" class="hidden rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card">
+          <div class="p-6">
+            <div class="flex items-center justify-between">
+              <h2 class="text-white font-semibold text-lg">Parent</h2>
+              <span class="text-xs px-3 py-1 rounded-full bg-indigo-400/10 border border-indigo-200/20 text-indigo-50">Email Link</span>
+            </div>
+
+            <div class="mt-4 space-y-3">
+              <input id="parentSchoolCode" autocomplete="off"
+                class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                       focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
+                placeholder="School code"/>
+
+              <input id="parentEmail" type="email" autocomplete="email"
+                class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                       focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
+                placeholder="Email"/>
+
+              <button id="sendEmailLinkBtn"
+                class="w-full px-4 py-3 rounded-2xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition">
+                Send login link
+              </button>
+
+              <div class="text-white/60 text-xs">
+                We’ll email a secure sign-in link. Open the link to finish login.
+              </div>
+
+              <button id="backToRole2"
+                class="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+                ← Back
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Email link helper (shows when user clicks link) -->
+        <div id="emailLinkHint" class="hidden lg:col-span-2 rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card">
+          <div class="p-6 text-white/85 text-sm">
+            If you opened the email sign-in link and nothing happened, confirm your email when prompted.
+          </div>
+        </div>
+      </section>
     </section>
 
-    <!-- PARENT DASHBOARD -->
+    <!-- PARENT VIEW -->
     <section id="parentView" class="hidden space-y-6">
       <div class="rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card">
         <div class="p-6 md:p-7">
@@ -198,7 +206,7 @@
               <p id="parentHeaderInfo" class="text-white/70 text-sm"></p>
             </div>
             <div class="text-white/70 text-sm">
-              <span id="parentPhoneText" class="text-white font-semibold"></span>
+              <span id="parentIdentityText" class="text-white font-semibold"></span>
             </div>
           </div>
 
@@ -253,7 +261,7 @@
       </div>
     </section>
 
-    <!-- STAFF DASHBOARD -->
+    <!-- STAFF VIEW -->
     <section id="staffView" class="hidden space-y-6">
       <div class="rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card">
         <div class="p-6 md:p-7">
@@ -266,11 +274,11 @@
             <div class="flex flex-wrap gap-2">
               <button id="exportPdfBtn"
                 class="px-4 py-2 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600 transition">
-                Export PDF
+                Export PDF & Clear
               </button>
               <button id="exportCsvBtn"
                 class="px-4 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
-                Export CSV
+                Export CSV & Clear
               </button>
               <button id="clearTodayBtn"
                 class="px-4 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
@@ -294,7 +302,7 @@
                 <input id="staffName"
                   class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
                          focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
-                  placeholder="Staff name"/>
+                  placeholder="Staff on duty"/>
 
                 <button id="saveSessionBtn"
                   class="w-full px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
@@ -310,10 +318,10 @@
                   class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
                          focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
                   placeholder="Parent name"/>
-                <input id="newGuardianPhone" inputmode="tel"
+                <input id="newGuardianEmail" type="email" autocomplete="email"
                   class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
                          focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
-                  placeholder="Phone (+1...)"/>
+                  placeholder="Parent email"/>
                 <button id="addGuardianBtn"
                   class="px-4 py-3 rounded-2xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition">
                   Add
@@ -378,7 +386,7 @@
                     <th class="text-left px-4 py-3 font-semibold">Staff</th>
                     <th class="text-left px-4 py-3 font-semibold">Action</th>
                     <th class="text-left px-4 py-3 font-semibold">Child</th>
-                    <th class="text-left px-4 py-3 font-semibold">Phone</th>
+                    <th class="text-left px-4 py-3 font-semibold">Email</th>
                     <th class="text-left px-4 py-3 font-semibold">Note</th>
                   </tr>
                 </thead>
@@ -409,7 +417,7 @@
 
             <div class="mt-3 grid grid-cols-2 gap-3">
               <div><div class="text-sm text-slate-600">Child</div><div id="pMChild" class="font-semibold"></div></div>
-              <div><div class="text-sm text-slate-600">Phone</div><div id="pMPhone" class="font-semibold"></div></div>
+              <div><div class="text-sm text-slate-600">Email</div><div id="pMEmail" class="font-semibold"></div></div>
             </div>
 
             <div class="mt-3">
@@ -449,7 +457,7 @@
 
             <div class="mt-3 grid grid-cols-2 gap-3">
               <div><div class="text-sm text-slate-600">Child</div><div id="sMChild" class="font-semibold"></div></div>
-              <div><div class="text-sm text-slate-600">Phone</div><div id="sMPhone" class="font-semibold"></div></div>
+              <div><div class="text-sm text-slate-600">Email</div><div id="sMEmail" class="font-semibold"></div></div>
             </div>
 
             <div class="mt-3 grid grid-cols-2 gap-3">
@@ -473,7 +481,9 @@
   </div>
 
 <script>
-/* ================= Firebase init ================= */
+/* ================= Firebase init =================
+   NOTE: Firebase "apiKey" is not a secret, but GitHub flags it.
+   In Google Cloud Console, restrict this key to your domain if desired. */
 const firebaseConfig = {
   apiKey: "AIzaSyC0vDzgPZllUU_gYU0iIYPiT4OWbj-eYHQ",
   authDomain: "preschool-a9bb0.firebaseapp.com",
@@ -483,13 +493,12 @@ const firebaseConfig = {
   appId: "1:462699240938:web:fad34d16574a062ce42693",
   measurementId: "G-PEL1T3XE2B"
 };
-
 firebase.initializeApp(firebaseConfig);
 try { firebase.analytics(); } catch(e) {}
 
 const AUTH = firebase.auth();
 const DB   = firebase.firestore();
-DB.enableNetwork().catch(()=>{}); // recover if previously offline
+DB.enableNetwork().catch(()=>{});
 
 /* ================= Helpers ================= */
 const pad2 = n => String(n).padStart(2,"0");
@@ -497,8 +506,8 @@ const todayKey = () => { const d=new Date(); return `${d.getFullYear()}-${pad2(d
 const nowLocal = () => { const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`; };
 const esc = s => String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
 const escA = s => esc(s).replaceAll("\n"," ");
-function normalizeE164(p){ return String(p||"").trim().replace(/\s+/g,""); }
-function isE164(p){ return /^\+\d{8,15}$/.test(p); }
+const normalizeEmail = s => String(s||"").trim().toLowerCase();
+const makeId = p => p + "_" + Math.random().toString(16).slice(2) + Date.now().toString(16);
 
 function setStatus(msg, type="info") {
   statusWrap.classList.remove("hidden");
@@ -512,39 +521,63 @@ function setStatus(msg, type="info") {
   statusMsg.textContent = msg;
 }
 
+function updateOfflineUI(){
+  offlineBar.classList.toggle("hidden", navigator.onLine);
+}
+window.addEventListener("online", updateOfflineUI);
+window.addEventListener("offline", updateOfflineUI);
+
+function safeSetInput(el, value){
+  if(document.activeElement === el) return;
+  el.value = value ?? "";
+}
+
 /* ================= DOM ================= */
-const schoolBadge = document.getElementById("schoolBadge");
 const subTitle = document.getElementById("subTitle");
 const logoutBtn = document.getElementById("logoutBtn");
 const offlineBar = document.getElementById("offlineBar");
+const schoolBadge = document.getElementById("schoolBadge");
+
 const statusWrap = document.getElementById("statusWrap");
 const statusMsg  = document.getElementById("statusMsg");
 
-/* Views */
-const roleSelectView = document.getElementById("roleSelectView");
-const staffLoginView = document.getElementById("staffLoginView");
-const parentLoginView = document.getElementById("parentLoginView");
+const rolePickView = document.getElementById("rolePickView");
+const pickStaffBtn = document.getElementById("pickStaffBtn");
+const pickParentBtn = document.getElementById("pickParentBtn");
+
+const staffAuthCard = document.getElementById("staffAuthCard");
+const parentAuthCard = document.getElementById("parentAuthCard");
+const emailLinkHint = document.getElementById("emailLinkHint");
+
+const backToRole1 = document.getElementById("backToRole1");
+const backToRole2 = document.getElementById("backToRole2");
+
 const staffView  = document.getElementById("staffView");
 const parentView = document.getElementById("parentView");
 
-/* Role buttons */
-const goStaffBtn = document.getElementById("goStaffBtn");
-const goParentBtn = document.getElementById("goParentBtn");
-const backFromStaffBtn = document.getElementById("backFromStaffBtn");
-const backFromParentBtn = document.getElementById("backFromParentBtn");
-
-/* Auth */
+/* Auth - Staff */
 const staffSchoolCode = document.getElementById("staffSchoolCode");
 const staffEmail = document.getElementById("staffEmail");
 const staffPassword = document.getElementById("staffPassword");
 const staffLoginBtn = document.getElementById("staffLoginBtn");
 const staffCreateBtn = document.getElementById("staffCreateBtn");
 
+/* Auth - Parent */
 const parentSchoolCode = document.getElementById("parentSchoolCode");
-const parentPhone = document.getElementById("parentPhone");
-const sendOtpBtn = document.getElementById("sendOtpBtn");
-const otpCode = document.getElementById("otpCode");
-const verifyOtpBtn = document.getElementById("verifyOtpBtn");
+const parentEmail = document.getElementById("parentEmail");
+const sendEmailLinkBtn = document.getElementById("sendEmailLinkBtn");
+
+/* Parent */
+const parentHeaderInfo = document.getElementById("parentHeaderInfo");
+const parentIdentityText = document.getElementById("parentIdentityText");
+const parentKidsList = document.getElementById("parentKidsList");
+const parentPendingList = document.getElementById("parentPendingList");
+const pSelectedChild = document.getElementById("pSelectedChild");
+const pSelectedStatus = document.getElementById("pSelectedStatus");
+const pNotes = document.getElementById("pNotes");
+const dropOffReqBtn = document.getElementById("dropOffReqBtn");
+const pickUpReqBtn  = document.getElementById("pickUpReqBtn");
+const clearParentSelectionBtn = document.getElementById("clearParentSelectionBtn");
 
 /* Staff */
 const schoolName = document.getElementById("schoolName");
@@ -556,7 +589,7 @@ const exportPdfBtn = document.getElementById("exportPdfBtn");
 const exportCsvBtn = document.getElementById("exportCsvBtn");
 
 const newGuardianName = document.getElementById("newGuardianName");
-const newGuardianPhone = document.getElementById("newGuardianPhone");
+const newGuardianEmail = document.getElementById("newGuardianEmail");
 const addGuardianBtn  = document.getElementById("addGuardianBtn");
 const guardianList    = document.getElementById("guardianList");
 
@@ -575,19 +608,6 @@ const pendingList  = document.getElementById("pendingList");
 const logCount = document.getElementById("logCount");
 const logTbody = document.getElementById("logTbody");
 
-/* Parent */
-const parentHeaderInfo = document.getElementById("parentHeaderInfo");
-const parentPhoneText = document.getElementById("parentPhoneText");
-const parentKidsList = document.getElementById("parentKidsList");
-const parentPendingList = document.getElementById("parentPendingList");
-
-const pSelectedChild = document.getElementById("pSelectedChild");
-const pSelectedStatus = document.getElementById("pSelectedStatus");
-const pNotes = document.getElementById("pNotes");
-const dropOffReqBtn = document.getElementById("dropOffReqBtn");
-const pickUpReqBtn  = document.getElementById("pickUpReqBtn");
-const clearParentSelectionBtn = document.getElementById("clearParentSelectionBtn");
-
 /* Modals */
 const parentConfirmModal = document.getElementById("parentConfirmModal");
 const pModalCloseBtn = document.getElementById("pModalCloseBtn");
@@ -595,7 +615,7 @@ const pModalCancelBtn = document.getElementById("pModalCancelBtn");
 const pModalConfirmBtn = document.getElementById("pModalConfirmBtn");
 const pMAction = document.getElementById("pMAction");
 const pMChild = document.getElementById("pMChild");
-const pMPhone = document.getElementById("pMPhone");
+const pMEmail = document.getElementById("pMEmail");
 const pMTime = document.getElementById("pMTime");
 const pMNotes = document.getElementById("pMNotes");
 
@@ -605,17 +625,19 @@ const sModalRejectBtn = document.getElementById("sModalRejectBtn");
 const sModalApproveBtn = document.getElementById("sModalApproveBtn");
 const sMAction = document.getElementById("sMAction");
 const sMChild = document.getElementById("sMChild");
-const sMPhone = document.getElementById("sMPhone");
+const sMEmail = document.getElementById("sMEmail");
 const sMReqTime = document.getElementById("sMReqTime");
 const sMConfTime = document.getElementById("sMConfTime");
 const sMNotes = document.getElementById("sMNotes");
 
 /* ================= App state ================= */
+const LS_SCHOOL = "PRESCHOOL_SCHOOL_CODE";
+const LS_PARENT_EMAIL = "PRESCHOOL_PARENT_EMAIL_FOR_LINK";
+
 let APP = {
   schoolCode: null,
   role: null,              // "staff" | "parent"
   user: null,
-  parentPhone: null,
 
   settings: { schoolName:"", className:"", staffName:"" },
   guardians: [],
@@ -630,55 +652,58 @@ let APP = {
   unsub: []
 };
 
-const LS_SCHOOL = "PRESCHOOL_SCHOOL_CODE";
-
 /* ================= Views ================= */
-function hideAll(){
-  roleSelectView.classList.add("hidden");
-  staffLoginView.classList.add("hidden");
-  parentLoginView.classList.add("hidden");
+function showRolePick() {
+  rolePickView.classList.remove("hidden");
+  staffAuthCard.classList.add("hidden");
+  parentAuthCard.classList.add("hidden");
   staffView.classList.add("hidden");
   parentView.classList.add("hidden");
-}
-function showRole(){
-  hideAll();
-  roleSelectView.classList.remove("hidden");
   logoutBtn.classList.add("hidden");
-  subTitle.textContent = "Choose role";
+  subTitle.textContent = "Welcome";
 }
-function showStaffLogin(){
-  hideAll();
-  staffLoginView.classList.remove("hidden");
+function showStaffAuth() {
+  rolePickView.classList.add("hidden");
+  staffAuthCard.classList.remove("hidden");
+  parentAuthCard.classList.add("hidden");
+  staffView.classList.add("hidden");
+  parentView.classList.add("hidden");
   logoutBtn.classList.add("hidden");
   subTitle.textContent = "Staff login";
 }
-function showParentLogin(){
-  hideAll();
-  parentLoginView.classList.remove("hidden");
+function showParentAuth() {
+  rolePickView.classList.add("hidden");
+  staffAuthCard.classList.add("hidden");
+  parentAuthCard.classList.remove("hidden");
+  staffView.classList.add("hidden");
+  parentView.classList.add("hidden");
   logoutBtn.classList.add("hidden");
   subTitle.textContent = "Parent login";
 }
-function showStaffDash(){
-  hideAll();
+function showStaff() {
+  rolePickView.classList.add("hidden");
+  staffAuthCard.classList.add("hidden");
+  parentAuthCard.classList.add("hidden");
   staffView.classList.remove("hidden");
+  parentView.classList.add("hidden");
   logoutBtn.classList.remove("hidden");
   subTitle.textContent = "Staff";
 }
-function showParentDash(){
-  hideAll();
+function showParent() {
+  rolePickView.classList.add("hidden");
+  staffAuthCard.classList.add("hidden");
+  parentAuthCard.classList.add("hidden");
+  staffView.classList.add("hidden");
   parentView.classList.remove("hidden");
   logoutBtn.classList.remove("hidden");
   subTitle.textContent = "Parent";
 }
 
-/* ================= Offline banner ================= */
-function updateOfflineUI(){
-  offlineBar.classList.toggle("hidden", navigator.onLine);
+function stopListeners(){
+  APP.unsub.forEach(fn=>{ try{ fn(); }catch{} });
+  APP.unsub = [];
 }
-window.addEventListener("online", updateOfflineUI);
-window.addEventListener("offline", updateOfflineUI);
 
-/* ================= School code ================= */
 function setSchoolCode(code){
   const c = String(code||"").trim().toUpperCase();
   APP.schoolCode = c || null;
@@ -690,24 +715,19 @@ function setSchoolCode(code){
     schoolBadge.classList.add("hidden");
   }
 }
+
 function schoolRef(){
   if(!APP.schoolCode) throw new Error("Missing schoolCode");
   return DB.collection("schools").doc(APP.schoolCode);
 }
-function stopListeners(){
-  APP.unsub.forEach(fn=>{ try{ fn(); }catch{} });
-  APP.unsub = [];
+
+/* ================= Security routing: staff allow-list ================= */
+async function isStaffAllowListed(uid){
+  const doc = await schoolRef().collection("staff").doc(uid).get();
+  return doc.exists;
 }
 
-/* ================= OTP ================= */
-let confirmationResult = null;
-function setupRecaptcha(){
-  if(window.recaptchaVerifier) return;
-  window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier("recaptcha-container", { size: "normal" });
-  window.recaptchaVerifier.render().catch(()=>{});
-}
-
-/* ================= Firestore sync ================= */
+/* ================= Firestore sync (no composite-index queries) ================= */
 function onSnapError(err){
   console.error(err);
   const msg = String(err?.message||"Error");
@@ -717,19 +737,6 @@ function onSnapError(err){
   } else {
     setStatus(msg, "err");
   }
-}
-
-/* staff must be allow-listed in schools/{code}/staff/{uid} */
-async function assertStaffAllowListed(){
-  const u = AUTH.currentUser;
-  if(!u) return false;
-  const doc = await schoolRef().collection("staff").doc(u.uid).get();
-  return doc.exists;
-}
-
-function safeSetInput(el, value){
-  if(document.activeElement === el) return;
-  el.value = value ?? "";
 }
 
 function bindSchoolDataForStaff(){
@@ -742,48 +749,50 @@ function bindSchoolDataForStaff(){
       safeSetInput(schoolName, APP.settings.schoolName || "");
       safeSetInput(className, APP.settings.className || "");
       safeSetInput(staffName, APP.settings.staffName || "");
+      renderParentHeader(); // keeps header consistent if you switch roles on same device
     }, onSnapError)
   );
 
   APP.unsub.push(
-    sref.collection("guardians").orderBy("name").onSnapshot((snap)=>{
-      APP.guardians = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+    sref.collection("guardians").onSnapshot((snap)=>{
+      APP.guardians = snap.docs.map(d=>({ id:d.id, ...d.data() }))
+        .sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
       renderGuardianList();
       renderLinkDropdowns();
     }, onSnapError)
   );
 
   APP.unsub.push(
-    sref.collection("children").orderBy("name").onSnapshot((snap)=>{
-      APP.children = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+    sref.collection("children").onSnapshot((snap)=>{
+      APP.children = snap.docs.map(d=>({ id:d.id, ...d.data() }))
+        .sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
       renderChildAdminList();
       renderLinkDropdowns();
     }, onSnapError)
   );
 
   APP.unsub.push(
-    sref.collection("pending").orderBy("requestedAtTs","desc").onSnapshot((snap)=>{
-      APP.pending = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+    sref.collection("pending").onSnapshot((snap)=>{
+      APP.pending = snap.docs.map(d=>({ id:d.id, ...d.data() }))
+        .sort((a,b)=> (b.requestedAtTs?.toMillis?.()||0) - (a.requestedAtTs?.toMillis?.()||0) );
       renderPending();
     }, onSnapError)
   );
 
   APP.unsub.push(
-    sref.collection("logs")
-      .where("date","==", todayKey())
-      .orderBy("staffTimeTs","desc")
-      .onSnapshot((snap)=>{
-        APP.logs = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-        renderLogs();
-      }, onSnapError)
+    sref.collection("logs").where("date","==", todayKey()).onSnapshot((snap)=>{
+      APP.logs = snap.docs.map(d=>({ id:d.id, ...d.data() }))
+        .sort((a,b)=> (b.staffTimeTs?.toMillis?.()||0) - (a.staffTimeTs?.toMillis?.()||0) );
+      renderLogs();
+    }, onSnapError)
   );
 }
 
 function bindSchoolDataForParent(){
   stopListeners();
   const sref = schoolRef();
-  const phone = APP.parentPhone;
-  if(!phone) return;
+  const email = normalizeEmail(AUTH.currentUser?.email);
+  if(!email) return;
 
   APP.unsub.push(
     sref.collection("settings").doc("main").onSnapshot((doc)=>{
@@ -794,20 +803,20 @@ function bindSchoolDataForParent(){
 
   APP.unsub.push(
     sref.collection("children")
-      .where("guardianPhones","array-contains", phone)
-      .orderBy("name")
+      .where("guardianEmails","array-contains", email)
       .onSnapshot((snap)=>{
-        APP.children = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+        APP.children = snap.docs.map(d=>({ id:d.id, ...d.data() }))
+          .sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
         renderParentKids();
       }, onSnapError)
   );
 
   APP.unsub.push(
     sref.collection("pending")
-      .where("guardianPhone","==", phone)
-      .orderBy("requestedAtTs","desc")
+      .where("guardianEmail","==", email)
       .onSnapshot((snap)=>{
-        APP.pending = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+        APP.pending = snap.docs.map(d=>({ id:d.id, ...d.data() }))
+          .sort((a,b)=> (b.requestedAtTs?.toMillis?.()||0) - (a.requestedAtTs?.toMillis?.()||0) );
         renderParentPending();
       }, onSnapError)
   );
@@ -815,33 +824,36 @@ function bindSchoolDataForParent(){
   APP.unsub.push(
     sref.collection("logs")
       .where("date","==", todayKey())
-      .where("guardianPhone","==", phone)
-      .orderBy("staffTimeTs","desc")
+      .where("guardianEmail","==", email)
       .onSnapshot((snap)=>{
-        APP.logs = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+        APP.logs = snap.docs.map(d=>({ id:d.id, ...d.data() }))
+          .sort((a,b)=> (b.staffTimeTs?.toMillis?.()||0) - (a.staffTimeTs?.toMillis?.()||0) );
         renderParentKids();
       }, onSnapError)
   );
 }
 
-/* ================= Render ================= */
+/* ================= Render (Parent) ================= */
 function renderParentHeader(){
   const parts = [APP.settings.schoolName, APP.settings.className].filter(Boolean);
   parentHeaderInfo.textContent = parts.join(" • ");
-  parentPhoneText.textContent = APP.parentPhone || "";
+  parentIdentityText.textContent = AUTH.currentUser?.email || "";
 }
+
 function latestActionForChild(childId){
   const last = APP.logs.find(l => l.childId === childId);
   return last ? last.action : null;
 }
+
 function clearParentSelection(){
   APP.selectedChildId = null;
   pSelectedChild.textContent = "Select a child";
   pSelectedStatus.textContent = "";
   pNotes.value = "";
 }
+
 function renderParentKids(){
-  const kids = (APP.children||[]).slice().sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
+  const kids = (APP.children||[]);
   if(!kids.length){
     parentKidsList.innerHTML = `<div class="p-4 text-white/60 text-sm">No linked children.</div>`;
     clearParentSelection();
@@ -869,13 +881,18 @@ function renderParentKids(){
       setStatus("Selected.", "ok");
     });
   });
+
+  renderParentPending();
 }
+
 function renderParentPending(){
   const list = (APP.pending||[]).slice(0,8);
   parentPendingList.innerHTML = list.length
     ? list.map(p=>`<div class="text-white/85">• ${esc(p.childName||"")} — ${p.action==="DROP_OFF"?"Drop-off":"Pick-up"} (waiting)</div>`).join("")
     : "None";
 }
+
+/* ================= Render (Staff) ================= */
 function renderGuardianList(){
   const gs = (APP.guardians||[]);
   if(!gs.length){
@@ -886,7 +903,7 @@ function renderGuardianList(){
     <div class="p-3 border-b border-white/5 flex items-center justify-between gap-3">
       <div>
         <div class="text-white font-semibold">${esc(g.name||"")}</div>
-        <div class="text-white/60 text-xs">${esc(g.phone||"")}</div>
+        <div class="text-white/60 text-xs">${esc(g.email||"")}</div>
       </div>
       <button data-delg="${escA(g.id)}"
         class="text-xs px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
@@ -904,6 +921,7 @@ function renderGuardianList(){
     });
   });
 }
+
 function renderChildAdminList(){
   const cs = (APP.children||[]);
   if(!cs.length){
@@ -911,13 +929,13 @@ function renderChildAdminList(){
     return;
   }
   childAdminList.innerHTML = cs.map(c=>{
-    const phones = (c.guardianPhones||[]).filter(Boolean);
+    const emails = (c.guardianEmails||[]).filter(Boolean);
     return `
       <div class="p-3 border-b border-white/5 flex items-start justify-between gap-3">
         <div>
           <div class="text-white font-semibold">${esc(c.name||"")}</div>
           <div class="text-white/60 text-xs mt-1">
-            ${phones.length ? phones.map(p=>`• ${esc(p)}`).join("<br/>") : "No linked parents"}
+            ${emails.length ? emails.map(e=>`• ${esc(e)}`).join("<br/>") : "No linked parents"}
           </div>
         </div>
         <button data-delc="${escA(c.id)}"
@@ -937,17 +955,17 @@ function renderChildAdminList(){
     });
   });
 }
+
 function renderLinkDropdowns(){
   linkChildSelect.innerHTML = `<option value="">Child</option>` +
-    (APP.children||[]).slice().sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")))
-      .map(c=>`<option value="${escA(c.id)}">${esc(c.name||"")}</option>`).join("");
+    (APP.children||[]).map(c=>`<option value="${escA(c.id)}">${esc(c.name||"")}</option>`).join("");
 
   linkGuardianSelect.innerHTML = `<option value="">Parent</option>` +
-    (APP.guardians||[]).slice().sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")))
-      .map(g=>`<option value="${escA(g.id)}">${esc(g.name||"")} (${esc(g.phone||"")})</option>`).join("");
+    (APP.guardians||[]).map(g=>`<option value="${escA(g.id)}">${esc(g.name||"")} (${esc(g.email||"")})</option>`).join("");
 
   linkSummary.textContent = `${(APP.children||[]).length} children • ${(APP.guardians||[]).length} parents • max 2`;
 }
+
 function renderPending(){
   pendingCount.textContent = `${(APP.pending||[]).length} pending`;
   const list = (APP.pending||[]);
@@ -966,7 +984,7 @@ function renderPending(){
             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs border ${pill}">
               ${p.action==="DROP_OFF"?"Drop-off":"Pick-up"}
             </span>
-            <span class="ml-2">${esc(p.guardianPhone||"")}</span>
+            <span class="ml-2">${esc(p.guardianEmail||"")}</span>
           </div>
           <div class="mt-1 text-white/60 text-xs">Parent: ${esc(p.requestedAt||"")}</div>
         </div>
@@ -982,6 +1000,7 @@ function renderPending(){
     btn.addEventListener("click", ()=>openStaffApproveModal(btn.getAttribute("data-approve")));
   });
 }
+
 function renderLogs(){
   const rows = (APP.logs||[]);
   logCount.textContent = `${rows.length} entries`;
@@ -1002,7 +1021,7 @@ function renderLogs(){
           </span>
         </td>
         <td class="px-4 py-3">${esc(r.childName||"")}</td>
-        <td class="px-4 py-3">${esc(r.guardianPhone||"")}</td>
+        <td class="px-4 py-3">${esc(r.guardianEmail||"")}</td>
         <td class="px-4 py-3 max-w-[260px] truncate" title="${escA(r.notes||"")}">${esc(r.notes||"")}</td>
       </tr>
     `;
@@ -1026,7 +1045,7 @@ function openParentConfirmModal(action){
   APP.parentPendingAction = action;
   pMAction.textContent = action==="DROP_OFF" ? "Drop-off" : "Pick-up";
   pMChild.textContent = child.name || "";
-  pMPhone.textContent = APP.parentPhone || "";
+  pMEmail.textContent = normalizeEmail(AUTH.currentUser?.email) || "";
   pMTime.textContent = nowLocal();
   pMNotes.textContent = (pNotes.value||"").trim() || "-";
   parentConfirmModal.classList.remove("hidden");
@@ -1039,8 +1058,9 @@ async function commitPending(){
   const action = APP.parentPendingAction;
   if(!action) return;
 
+  const email = normalizeEmail(AUTH.currentUser?.email);
   const child = APP.children.find(c=>c.id===APP.selectedChildId);
-  if(!child) return;
+  if(!child || !email) return;
 
   await schoolRef().collection("pending").add({
     date: todayKey(),
@@ -1048,7 +1068,7 @@ async function commitPending(){
     schoolCode: APP.schoolCode,
     childId: child.id,
     childName: child.name || "",
-    guardianPhone: APP.parentPhone || "",
+    guardianEmail: email,
     notes: (pNotes.value||"").trim(),
     requestedAt: nowLocal(),
     requestedAtTs: firebase.firestore.FieldValue.serverTimestamp()
@@ -1067,7 +1087,7 @@ function openStaffApproveModal(pendingId){
 
   sMAction.textContent = req.action==="DROP_OFF" ? "Drop-off" : "Pick-up";
   sMChild.textContent = req.childName || "";
-  sMPhone.textContent = req.guardianPhone || "";
+  sMEmail.textContent = req.guardianEmail || "";
   sMReqTime.textContent = req.requestedAt || "";
   sMConfTime.textContent = nowLocal();
   sMNotes.textContent = req.notes || "-";
@@ -1098,7 +1118,7 @@ async function staffApprove(){
     action: req.action,
     childId: req.childId,
     childName: req.childName,
-    guardianPhone: req.guardianPhone,
+    guardianEmail: req.guardianEmail,
     notes: req.notes || "",
     parentTime: req.requestedAt,
     staffTime: nowLocal(),
@@ -1121,33 +1141,38 @@ async function saveSettings(){
   }, { merge:true });
   setStatus("Saved.", "ok");
 }
+
 async function addGuardian(){
   const name = (newGuardianName.value||"").trim();
-  const phone = normalizeE164(newGuardianPhone.value||"");
+  const email = normalizeEmail(newGuardianEmail.value||"");
   if(!name) return setStatus("Enter name.", "err");
-  if(!isE164(phone)) return setStatus("Use +country... format.", "err");
+  if(!email || !email.includes("@")) return setStatus("Enter valid email.", "err");
 
-  const existing = await schoolRef().collection("guardians").where("phone","==",phone).limit(1).get();
-  if(!existing.empty) return setStatus("Phone exists.", "err");
+  const existing = await schoolRef().collection("guardians").where("email","==",email).limit(1).get();
+  if(!existing.empty) return setStatus("Email exists.", "err");
 
   await schoolRef().collection("guardians").add({
-    name, phone,
+    name, email,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
-  newGuardianName.value = ""; newGuardianPhone.value = "";
+
+  newGuardianName.value = "";
+  newGuardianEmail.value = "";
   setStatus("Added.", "ok");
 }
+
 async function addChild(){
   const name = (newChildName.value||"").trim();
   if(!name) return setStatus("Enter child name.", "err");
   await schoolRef().collection("children").add({
     name,
-    guardianPhones: [],
+    guardianEmails: [],
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
   newChildName.value = "";
   setStatus("Added.", "ok");
 }
+
 async function linkParentToChild(){
   const childId = linkChildSelect.value;
   const guardianId = linkGuardianSelect.value;
@@ -1161,12 +1186,13 @@ async function linkParentToChild(){
   if(!cSnap.exists) return setStatus("Child missing.", "err");
   const c = cSnap.data();
 
-  const phones = Array.isArray(c.guardianPhones) ? c.guardianPhones.slice() : [];
-  if(phones.includes(g.phone)) return setStatus("Already linked.", "info");
-  if(phones.length >= 2) return setStatus("Max 2 parents.", "err");
+  const emails = Array.isArray(c.guardianEmails) ? c.guardianEmails.slice() : [];
+  if(emails.includes(g.email)) return setStatus("Already linked.", "info");
+  if(emails.length >= 2) return setStatus("Max 2 parents.", "err");
 
-  phones.push(g.phone);
-  await cRef.set({ guardianPhones: phones }, { merge:true });
+  emails.push(g.email);
+  await cRef.set({ guardianEmails: emails }, { merge:true });
+
   setStatus("Linked.", "ok");
 }
 
@@ -1179,7 +1205,7 @@ async function exportAndArchive(kind){
   const date = todayKey();
 
   if(kind==="csv"){
-    const headers = ["date","parentTime","staffTime","action","childName","guardianPhone","notes","staffName","schoolName","className"];
+    const headers = ["date","parentTime","staffTime","action","childName","guardianEmail","notes","staffName","schoolName","className"];
     const csvEscape = v => `"${String(v ?? "").replaceAll('"','""')}"`;
     const rows = APP.logs.slice().reverse().map(r => headers.map(h => csvEscape(
       h==="schoolName" ? (APP.settings.schoolName||"") :
@@ -1211,13 +1237,13 @@ async function exportAndArchive(kind){
       r.parentTime, r.staffTime,
       r.action==="DROP_OFF" ? "Drop-off" : "Pick-up",
       r.childName,
-      r.guardianPhone,
+      r.guardianEmail,
       (r.notes||"").slice(0,90),
     ]));
 
     doc.autoTable({
       startY: y,
-      head: [["Parent","Staff","Action","Child","Phone","Note"]],
+      head: [["Parent","Staff","Action","Child","Email","Note"]],
       body,
       theme: "grid",
       styles: { font:"helvetica", fontSize: 9, cellPadding: 4, overflow:"linebreak" },
@@ -1235,100 +1261,136 @@ async function exportAndArchive(kind){
     logs: APP.logs.slice().reverse()
   }, { merge:true });
 
+  // clear today's pending + logs
   const batch = DB.batch();
   const pendSnap = await sref.collection("pending").get();
   pendSnap.forEach(d=>batch.delete(d.ref));
 
   const logsSnap = await sref.collection("logs").where("date","==",date).get();
   logsSnap.forEach(d=>batch.delete(d.ref));
-  await batch.commit();
 
+  await batch.commit();
   setStatus("Exported + cleared.", "ok");
 }
 
 async function clearToday(){
   if(APP.role!=="staff") return setStatus("Staff only.", "err");
   if(!confirm("Clear today?")) return;
+
   const sref = schoolRef();
   const date = todayKey();
 
   const batch = DB.batch();
   const pendSnap = await sref.collection("pending").get();
   pendSnap.forEach(d=>batch.delete(d.ref));
+
   const logsSnap = await sref.collection("logs").where("date","==",date).get();
   logsSnap.forEach(d=>batch.delete(d.ref));
+
   await batch.commit();
   setStatus("Cleared.", "ok");
 }
 
-/* ================= Auth flow ================= */
+/* ================= Email Link Auth (Parent) ================= */
+async function sendParentEmailLink(){
+  const code = (parentSchoolCode.value||"").trim().toUpperCase();
+  const email = normalizeEmail(parentEmail.value||"");
+  if(!code) return setStatus("Enter school code.", "err");
+  if(!email || !email.includes("@")) return setStatus("Enter valid email.", "err");
+
+  setSchoolCode(code);
+
+  // Put school in the return URL so parent can login from any device
+  const url = `${location.origin}${location.pathname}?mode=parent&school=${encodeURIComponent(code)}`;
+
+  const actionCodeSettings = { url, handleCodeInApp: true };
+  await AUTH.sendSignInLinkToEmail(email, actionCodeSettings);
+
+  localStorage.setItem(LS_PARENT_EMAIL, email);
+  emailLinkHint.classList.remove("hidden");
+  setStatus("Login link sent. Check your email.", "ok");
+}
+
+async function completeEmailLinkIfPresent(){
+  if(!AUTH.isSignInWithEmailLink(window.location.href)) return;
+
+  emailLinkHint.classList.remove("hidden");
+
+  const u = new URL(window.location.href);
+  const school = (u.searchParams.get("school") || "").trim().toUpperCase();
+  if(school) setSchoolCode(school);
+
+  let email = localStorage.getItem(LS_PARENT_EMAIL);
+  if(!email) email = normalizeEmail(prompt("Confirm your email to finish login:") || "");
+  if(!email) return setStatus("Email is required to finish login.", "err");
+
+  await AUTH.signInWithEmailLink(email, window.location.href);
+  localStorage.removeItem(LS_PARENT_EMAIL);
+
+  // clean URL
+  window.history.replaceState({}, document.title, location.pathname);
+}
+
+/* ================= Auth state router ================= */
 async function authStateReady(user){
-  APP.user = user || AUTH.currentUser;
+  APP.user = user || null;
 
   if(!APP.user){
-    stopListeners();
     APP.role = null;
-    APP.parentPhone = null;
-    showRole();
+    stopListeners();
+    showRolePick();
     return;
   }
 
-  const email = APP.user.email || null;
-  const phone = APP.user.phoneNumber || null;
+  // Ensure school code present (from URL param or saved)
+  const saved = localStorage.getItem(LS_SCHOOL) || "";
+  if(!APP.schoolCode && saved) setSchoolCode(saved);
 
-  if(email){
-    try{
-      const ok = await assertStaffAllowListed();
-      if(!ok){
-        await AUTH.signOut();
-        setStatus("Staff not allow-listed for this school code.", "err");
-        showStaffLogin();
-        return;
-      }
+  if(!APP.schoolCode){
+    await AUTH.signOut();
+    showRolePick();
+    return setStatus("Missing school code.", "err");
+  }
+
+  // Staff vs Parent: staff must be allow-listed
+  try{
+    const staffOk = await isStaffAllowListed(APP.user.uid);
+    if(staffOk){
       APP.role = "staff";
-      showStaffDash();
+      showStaff();
       bindSchoolDataForStaff();
       setStatus("Staff signed in.", "ok");
       return;
-    } catch(e){
-      console.error(e);
-      setStatus("Cannot verify staff access. Check rules + allow-list.", "err");
-      showStaffLogin();
-      return;
     }
-  }
-
-  if(phone){
+    // Not allow-listed => parent
     APP.role = "parent";
-    APP.parentPhone = phone;
-    showParentDash();
+    showParent();
     renderParentHeader();
     bindSchoolDataForParent();
     setStatus("Parent signed in.", "ok");
-    return;
+  } catch(e){
+    console.error(e);
+    await AUTH.signOut();
+    showRolePick();
+    setStatus("Access check failed. Verify rules and allow-list.", "err");
   }
-
-  await AUTH.signOut();
-  showRole();
-  setStatus("Unsupported login type.", "err");
 }
 
-/* ================= Role nav ================= */
-goStaffBtn.addEventListener("click", showStaffLogin);
-goParentBtn.addEventListener("click", showParentLogin);
-backFromStaffBtn.addEventListener("click", showRole);
-backFromParentBtn.addEventListener("click", showRole);
-
+/* ================= Events ================= */
 logoutBtn.addEventListener("click", async ()=>{
   await AUTH.signOut();
   setStatus("Logged out.", "info");
 });
 
-/* ================= Events ================= */
+pickStaffBtn.addEventListener("click", showStaffAuth);
+pickParentBtn.addEventListener("click", showParentAuth);
+backToRole1.addEventListener("click", showRolePick);
+backToRole2.addEventListener("click", showRolePick);
+
 staffCreateBtn.addEventListener("click", async ()=>{
   try{
     const code = (staffSchoolCode.value||"").trim().toUpperCase();
-    const email = (staffEmail.value||"").trim();
+    const email = normalizeEmail(staffEmail.value||"");
     const pass  = (staffPassword.value||"").trim();
     if(!code) return setStatus("Enter school code.", "err");
     if(!email || !pass) return setStatus("Enter email/password.", "err");
@@ -1345,7 +1407,7 @@ staffCreateBtn.addEventListener("click", async ()=>{
 staffLoginBtn.addEventListener("click", async ()=>{
   try{
     const code = (staffSchoolCode.value||"").trim().toUpperCase();
-    const email = (staffEmail.value||"").trim();
+    const email = normalizeEmail(staffEmail.value||"");
     const pass  = (staffPassword.value||"").trim();
     if(!code) return setStatus("Enter school code.", "err");
     if(!email || !pass) return setStatus("Enter email/password.", "err");
@@ -1358,33 +1420,9 @@ staffLoginBtn.addEventListener("click", async ()=>{
   }
 });
 
-sendOtpBtn.addEventListener("click", async ()=>{
-  try{
-    const code = (parentSchoolCode.value||"").trim().toUpperCase();
-    const phone = normalizeE164(parentPhone.value||"");
-    if(!code) return setStatus("Enter school code.", "err");
-    if(!isE164(phone)) return setStatus("Use +country... format.", "err");
-    setSchoolCode(code);
-
-    setupRecaptcha();
-    confirmationResult = await AUTH.signInWithPhoneNumber(phone, window.recaptchaVerifier);
-    setStatus("Code sent.", "ok");
-  } catch(e){
-    console.error(e);
-    setStatus(e?.message || "Error", "err");
-  }
-});
-
-verifyOtpBtn.addEventListener("click", async ()=>{
-  try{
-    if(!confirmationResult) return setStatus("Send code first.", "err");
-    const code = (otpCode.value||"").trim();
-    if(!code) return setStatus("Enter code.", "err");
-    await confirmationResult.confirm(code);
-  } catch(e){
-    console.error(e);
-    setStatus(e?.message || "Error", "err");
-  }
+sendEmailLinkBtn.addEventListener("click", async ()=>{
+  try { await sendParentEmailLink(); }
+  catch(e){ console.error(e); setStatus(e?.message || "Error", "err"); }
 });
 
 /* Staff actions */
@@ -1400,6 +1438,7 @@ clearTodayBtn.addEventListener("click", clearToday);
 clearParentSelectionBtn.addEventListener("click", clearParentSelection);
 dropOffReqBtn.addEventListener("click", ()=>openParentConfirmModal("DROP_OFF"));
 pickUpReqBtn.addEventListener("click", ()=>openParentConfirmModal("PICK_UP"));
+
 pModalCloseBtn.addEventListener("click", closeParentModal);
 pModalCancelBtn.addEventListener("click", closeParentModal);
 parentConfirmModal.addEventListener("click", (e)=>{ if(e.target===parentConfirmModal) closeParentModal(); });
@@ -1412,14 +1451,28 @@ sModalRejectBtn.addEventListener("click", staffReject);
 sModalApproveBtn.addEventListener("click", staffApprove);
 
 /* ================= Boot ================= */
-function boot(){
+async function boot(){
   updateOfflineUI();
+
+  // read school from URL if present
+  const u = new URL(window.location.href);
+  const school = (u.searchParams.get("school") || "").trim().toUpperCase();
+  if(school) setSchoolCode(school);
+
+  // also restore school from localStorage
   const saved = localStorage.getItem(LS_SCHOOL) || "";
   if(saved){
     staffSchoolCode.value = saved;
     parentSchoolCode.value = saved;
-    setSchoolCode(saved);
+    if(!APP.schoolCode) setSchoolCode(saved);
   }
+
+  showRolePick();
+
+  // If email link opened, finish sign-in first
+  try { await completeEmailLinkIfPresent(); }
+  catch(e){ console.error(e); setStatus(e?.message || "Error finishing email login", "err"); }
+
   AUTH.onAuthStateChanged((user)=>authStateReady(user));
 }
 boot();
