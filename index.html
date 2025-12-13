@@ -109,7 +109,7 @@
           <div class="p-6">
             <div class="flex items-center justify-between">
               <h2 class="text-white font-semibold text-lg">Staff</h2>
-              <span class="text-xs px-3 py-1 rounded-full bg-cyan-400/10 border border-cyan-200/20 text-cyan-50">Admin</span>
+              <span class="text-xs px-3 py-1 rounded-full bg-cyan-400/10 border border-cyan-200/20 text-cyan-50">Email + Password</span>
             </div>
 
             <div class="mt-4 space-y-3">
@@ -156,7 +156,7 @@
           <div class="p-6">
             <div class="flex items-center justify-between">
               <h2 class="text-white font-semibold text-lg">Parent</h2>
-              <span class="text-xs px-3 py-1 rounded-full bg-indigo-400/10 border border-indigo-200/20 text-indigo-50">Email Link</span>
+              <span class="text-xs px-3 py-1 rounded-full bg-indigo-400/10 border border-indigo-200/20 text-indigo-50">Passwordless Email Link</span>
             </div>
 
             <div class="mt-4 space-y-3">
@@ -176,7 +176,7 @@
               </button>
 
               <div class="text-white/60 text-xs">
-                We’ll email a secure sign-in link. Open the link to finish login.
+                We’ll email a secure sign-in link. Check Spam/Promotions if you don’t see it.
               </div>
 
               <button id="backToRole2"
@@ -187,10 +187,10 @@
           </div>
         </div>
 
-        <!-- Email link helper (shows when user clicks link) -->
+        <!-- Email link helper -->
         <div id="emailLinkHint" class="hidden lg:col-span-2 rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card">
           <div class="p-6 text-white/85 text-sm">
-            If you opened the email sign-in link and nothing happened, confirm your email when prompted.
+            If you opened the sign-in link on a different device, you may be prompted to confirm your email.
           </div>
         </div>
       </section>
@@ -483,7 +483,7 @@
 <script>
 /* ================= Firebase init =================
    NOTE: Firebase "apiKey" is not a secret, but GitHub flags it.
-   In Google Cloud Console, restrict this key to your domain if desired. */
+   Restrict it in Google Cloud Console -> APIs & Services -> Credentials -> API Key -> HTTP referrers. */
 const firebaseConfig = {
   apiKey: "AIzaSyC0vDzgPZllUU_gYU0iIYPiT4OWbj-eYHQ",
   authDomain: "preschool-a9bb0.firebaseapp.com",
@@ -493,10 +493,13 @@ const firebaseConfig = {
   appId: "1:462699240938:web:fad34d16574a062ce42693",
   measurementId: "G-PEL1T3XE2B"
 };
+
 firebase.initializeApp(firebaseConfig);
 try { firebase.analytics(); } catch(e) {}
 
 const AUTH = firebase.auth();
+AUTH.useDeviceLanguage();
+
 const DB   = firebase.firestore();
 DB.enableNetwork().catch(()=>{});
 
@@ -507,7 +510,6 @@ const nowLocal = () => { const d=new Date(); return `${d.getFullYear()}-${pad2(d
 const esc = s => String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
 const escA = s => esc(s).replaceAll("\n"," ");
 const normalizeEmail = s => String(s||"").trim().toLowerCase();
-const makeId = p => p + "_" + Math.random().toString(16).slice(2) + Date.now().toString(16);
 
 function setStatus(msg, type="info") {
   statusWrap.classList.remove("hidden");
@@ -530,6 +532,22 @@ window.addEventListener("offline", updateOfflineUI);
 function safeSetInput(el, value){
   if(document.activeElement === el) return;
   el.value = value ?? "";
+}
+
+function baseAppUrlWithParams(paramsObj){
+  // builds a safe base URL like: https://domain/preschool/ (or /index.html), then adds params
+  const cleanPath = location.pathname; // keep as-is for GitHub Pages
+  const u = new URL(location.origin + cleanPath);
+  Object.entries(paramsObj || {}).forEach(([k,v]) => u.searchParams.set(k, v));
+  return u.toString();
+}
+
+function guardHosted(){
+  if(location.protocol === "file:"){
+    setStatus("This app must be opened from a hosted URL (not file://). Use GitHub Pages or a local server.", "err");
+    return false;
+  }
+  return true;
 }
 
 /* ================= DOM ================= */
@@ -727,7 +745,7 @@ async function isStaffAllowListed(uid){
   return doc.exists;
 }
 
-/* ================= Firestore sync (no composite-index queries) ================= */
+/* ================= Firestore sync ================= */
 function onSnapError(err){
   console.error(err);
   const msg = String(err?.message||"Error");
@@ -749,7 +767,6 @@ function bindSchoolDataForStaff(){
       safeSetInput(schoolName, APP.settings.schoolName || "");
       safeSetInput(className, APP.settings.className || "");
       safeSetInput(staffName, APP.settings.staffName || "");
-      renderParentHeader(); // keeps header consistent if you switch roles on same device
     }, onSnapError)
   );
 
@@ -821,6 +838,8 @@ function bindSchoolDataForParent(){
       }, onSnapError)
   );
 
+  // NOTE: this query may require a composite index in some projects.
+  // If it does, we can remove it and infer status from children/pending only.
   APP.unsub.push(
     sref.collection("logs")
       .where("date","==", todayKey())
@@ -833,25 +852,22 @@ function bindSchoolDataForParent(){
   );
 }
 
-/* ================= Render (Parent) ================= */
+/* ================= Render ================= */
 function renderParentHeader(){
   const parts = [APP.settings.schoolName, APP.settings.className].filter(Boolean);
   parentHeaderInfo.textContent = parts.join(" • ");
   parentIdentityText.textContent = AUTH.currentUser?.email || "";
 }
-
 function latestActionForChild(childId){
   const last = APP.logs.find(l => l.childId === childId);
   return last ? last.action : null;
 }
-
 function clearParentSelection(){
   APP.selectedChildId = null;
   pSelectedChild.textContent = "Select a child";
   pSelectedStatus.textContent = "";
   pNotes.value = "";
 }
-
 function renderParentKids(){
   const kids = (APP.children||[]);
   if(!kids.length){
@@ -881,18 +897,13 @@ function renderParentKids(){
       setStatus("Selected.", "ok");
     });
   });
-
-  renderParentPending();
 }
-
 function renderParentPending(){
   const list = (APP.pending||[]).slice(0,8);
   parentPendingList.innerHTML = list.length
     ? list.map(p=>`<div class="text-white/85">• ${esc(p.childName||"")} — ${p.action==="DROP_OFF"?"Drop-off":"Pick-up"} (waiting)</div>`).join("")
     : "None";
 }
-
-/* ================= Render (Staff) ================= */
 function renderGuardianList(){
   const gs = (APP.guardians||[]);
   if(!gs.length){
@@ -921,7 +932,6 @@ function renderGuardianList(){
     });
   });
 }
-
 function renderChildAdminList(){
   const cs = (APP.children||[]);
   if(!cs.length){
@@ -955,7 +965,6 @@ function renderChildAdminList(){
     });
   });
 }
-
 function renderLinkDropdowns(){
   linkChildSelect.innerHTML = `<option value="">Child</option>` +
     (APP.children||[]).map(c=>`<option value="${escA(c.id)}">${esc(c.name||"")}</option>`).join("");
@@ -965,7 +974,6 @@ function renderLinkDropdowns(){
 
   linkSummary.textContent = `${(APP.children||[]).length} children • ${(APP.guardians||[]).length} parents • max 2`;
 }
-
 function renderPending(){
   pendingCount.textContent = `${(APP.pending||[]).length} pending`;
   const list = (APP.pending||[]);
@@ -1000,7 +1008,6 @@ function renderPending(){
     btn.addEventListener("click", ()=>openStaffApproveModal(btn.getAttribute("data-approve")));
   });
 }
-
 function renderLogs(){
   const rows = (APP.logs||[]);
   logCount.textContent = `${rows.length} entries`;
@@ -1261,15 +1268,13 @@ async function exportAndArchive(kind){
     logs: APP.logs.slice().reverse()
   }, { merge:true });
 
-  // clear today's pending + logs
   const batch = DB.batch();
   const pendSnap = await sref.collection("pending").get();
   pendSnap.forEach(d=>batch.delete(d.ref));
-
   const logsSnap = await sref.collection("logs").where("date","==",date).get();
   logsSnap.forEach(d=>batch.delete(d.ref));
-
   await batch.commit();
+
   setStatus("Exported + cleared.", "ok");
 }
 
@@ -1283,16 +1288,17 @@ async function clearToday(){
   const batch = DB.batch();
   const pendSnap = await sref.collection("pending").get();
   pendSnap.forEach(d=>batch.delete(d.ref));
-
   const logsSnap = await sref.collection("logs").where("date","==",date).get();
   logsSnap.forEach(d=>batch.delete(d.ref));
-
   await batch.commit();
+
   setStatus("Cleared.", "ok");
 }
 
 /* ================= Email Link Auth (Parent) ================= */
 async function sendParentEmailLink(){
+  if(!guardHosted()) return;
+
   const code = (parentSchoolCode.value||"").trim().toUpperCase();
   const email = normalizeEmail(parentEmail.value||"");
   if(!code) return setStatus("Enter school code.", "err");
@@ -1300,15 +1306,15 @@ async function sendParentEmailLink(){
 
   setSchoolCode(code);
 
-  // Put school in the return URL so parent can login from any device
-  const url = `${location.origin}${location.pathname}?mode=parent&school=${encodeURIComponent(code)}`;
+  const url = baseAppUrlWithParams({ mode:"parent", school: code });
 
   const actionCodeSettings = { url, handleCodeInApp: true };
+
   await AUTH.sendSignInLinkToEmail(email, actionCodeSettings);
 
   localStorage.setItem(LS_PARENT_EMAIL, email);
   emailLinkHint.classList.remove("hidden");
-  setStatus("Login link sent. Check your email.", "ok");
+  setStatus("Login link sent. Check inbox + spam.", "ok");
 }
 
 async function completeEmailLinkIfPresent(){
@@ -1327,7 +1333,6 @@ async function completeEmailLinkIfPresent(){
   await AUTH.signInWithEmailLink(email, window.location.href);
   localStorage.removeItem(LS_PARENT_EMAIL);
 
-  // clean URL
   window.history.replaceState({}, document.title, location.pathname);
 }
 
@@ -1342,7 +1347,6 @@ async function authStateReady(user){
     return;
   }
 
-  // Ensure school code present (from URL param or saved)
   const saved = localStorage.getItem(LS_SCHOOL) || "";
   if(!APP.schoolCode && saved) setSchoolCode(saved);
 
@@ -1352,7 +1356,6 @@ async function authStateReady(user){
     return setStatus("Missing school code.", "err");
   }
 
-  // Staff vs Parent: staff must be allow-listed
   try{
     const staffOk = await isStaffAllowListed(APP.user.uid);
     if(staffOk){
@@ -1362,7 +1365,7 @@ async function authStateReady(user){
       setStatus("Staff signed in.", "ok");
       return;
     }
-    // Not allow-listed => parent
+
     APP.role = "parent";
     showParent();
     renderParentHeader();
@@ -1372,14 +1375,16 @@ async function authStateReady(user){
     console.error(e);
     await AUTH.signOut();
     showRolePick();
-    setStatus("Access check failed. Verify rules and allow-list.", "err");
+    setStatus("Access check failed. Verify rules + allow-list.", "err");
   }
 }
 
 /* ================= Events ================= */
 logoutBtn.addEventListener("click", async ()=>{
+  stopListeners();
   await AUTH.signOut();
   setStatus("Logged out.", "info");
+  showRolePick();
 });
 
 pickStaffBtn.addEventListener("click", showStaffAuth);
@@ -1454,12 +1459,10 @@ sModalApproveBtn.addEventListener("click", staffApprove);
 async function boot(){
   updateOfflineUI();
 
-  // read school from URL if present
   const u = new URL(window.location.href);
   const school = (u.searchParams.get("school") || "").trim().toUpperCase();
   if(school) setSchoolCode(school);
 
-  // also restore school from localStorage
   const saved = localStorage.getItem(LS_SCHOOL) || "";
   if(saved){
     staffSchoolCode.value = saved;
@@ -1469,7 +1472,7 @@ async function boot(){
 
   showRolePick();
 
-  // If email link opened, finish sign-in first
+  // If the user opened a magic link, finish sign-in first
   try { await completeEmailLinkIfPresent(); }
   catch(e){ console.error(e); setStatus(e?.message || "Error finishing email login", "err"); }
 
