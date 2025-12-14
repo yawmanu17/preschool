@@ -535,8 +535,8 @@ function safeSetInput(el, value){
 }
 
 function baseAppUrlWithParams(paramsObj){
-  // builds a safe base URL like: https://domain/preschool/ (or /index.html), then adds params
-  const cleanPath = location.pathname; // keep as-is for GitHub Pages
+  // Works for GitHub Pages, Firebase Hosting, etc.
+  const cleanPath = location.pathname;
   const u = new URL(location.origin + cleanPath);
   Object.entries(paramsObj || {}).forEach(([k,v]) => u.searchParams.set(k, v));
   return u.toString();
@@ -818,6 +818,8 @@ function bindSchoolDataForParent(){
     }, onSnapError)
   );
 
+  // Parent reads children (linked via guardianEmails).
+  // Status comes from children.lastAction (written by staff on approve) -> NO parent logs query -> NO composite index.
   APP.unsub.push(
     sref.collection("children")
       .where("guardianEmails","array-contains", email)
@@ -835,19 +837,7 @@ function bindSchoolDataForParent(){
         APP.pending = snap.docs.map(d=>({ id:d.id, ...d.data() }))
           .sort((a,b)=> (b.requestedAtTs?.toMillis?.()||0) - (a.requestedAtTs?.toMillis?.()||0) );
         renderParentPending();
-      }, onSnapError)
-  );
-
-  // NOTE: this query may require a composite index in some projects.
-  // If it does, we can remove it and infer status from children/pending only.
-  APP.unsub.push(
-    sref.collection("logs")
-      .where("date","==", todayKey())
-      .where("guardianEmail","==", email)
-      .onSnapshot((snap)=>{
-        APP.logs = snap.docs.map(d=>({ id:d.id, ...d.data() }))
-          .sort((a,b)=> (b.staffTimeTs?.toMillis?.()||0) - (a.staffTimeTs?.toMillis?.()||0) );
-        renderParentKids();
+        renderParentKids(); // so pending can be indicated if you later want
       }, onSnapError)
   );
 }
@@ -858,16 +848,20 @@ function renderParentHeader(){
   parentHeaderInfo.textContent = parts.join(" • ");
   parentIdentityText.textContent = AUTH.currentUser?.email || "";
 }
+
+// FIX #1: status now comes from children.lastAction (not logs)
 function latestActionForChild(childId){
-  const last = APP.logs.find(l => l.childId === childId);
-  return last ? last.action : null;
+  const c = (APP.children||[]).find(x => x.id === childId);
+  return c?.lastAction || null; // "DROP_OFF" | "PICK_UP" | null
 }
+
 function clearParentSelection(){
   APP.selectedChildId = null;
   pSelectedChild.textContent = "Select a child";
   pSelectedStatus.textContent = "";
   pNotes.value = "";
 }
+
 function renderParentKids(){
   const kids = (APP.children||[]);
   if(!kids.length){
@@ -875,14 +869,22 @@ function renderParentKids(){
     clearParentSelection();
     return;
   }
+
   parentKidsList.innerHTML = kids.map(c=>{
-    const st = latestActionForChild(c.id);
-    const pill = st==="DROP_OFF" ? "bg-emerald-400/10 border-emerald-200/20 text-emerald-50"
-                                : "bg-indigo-400/10 border-indigo-200/20 text-indigo-50";
+    const st = c.lastAction || null;
+
+    // Only show pill if a real lastAction exists
+    let pillHtml = "";
+    if(st === "DROP_OFF"){
+      pillHtml = `<span class="text-xs px-3 py-1 rounded-full border bg-emerald-400/10 border-emerald-200/20 text-emerald-50">IN</span>`;
+    } else if(st === "PICK_UP"){
+      pillHtml = `<span class="text-xs px-3 py-1 rounded-full border bg-indigo-400/10 border-indigo-200/20 text-indigo-50">OUT</span>`;
+    }
+
     return `
       <button data-kid="${escA(c.id)}" class="w-full text-left p-4 flex items-center justify-between gap-3 hover:bg-white/5 transition">
         <div class="text-white font-semibold">${esc(c.name||"")}</div>
-        ${st ? `<span class="text-xs px-3 py-1 rounded-full border ${pill}">${st==="DROP_OFF"?"IN":"OUT"}</span>` : ``}
+        ${pillHtml}
       </button>
     `;
   }).join("");
@@ -892,18 +894,21 @@ function renderParentKids(){
       APP.selectedChildId = btn.getAttribute("data-kid");
       const child = APP.children.find(c=>c.id===APP.selectedChildId);
       pSelectedChild.textContent = child?.name || "Select a child";
-      const st = latestActionForChild(APP.selectedChildId);
+
+      const st = child?.lastAction || null;
       pSelectedStatus.textContent = st ? `Status: ${st==="DROP_OFF"?"IN":"OUT"}` : "";
       setStatus("Selected.", "ok");
     });
   });
 }
+
 function renderParentPending(){
   const list = (APP.pending||[]).slice(0,8);
   parentPendingList.innerHTML = list.length
     ? list.map(p=>`<div class="text-white/85">• ${esc(p.childName||"")} — ${p.action==="DROP_OFF"?"Drop-off":"Pick-up"} (waiting)</div>`).join("")
     : "None";
 }
+
 function renderGuardianList(){
   const gs = (APP.guardians||[]);
   if(!gs.length){
@@ -932,6 +937,7 @@ function renderGuardianList(){
     });
   });
 }
+
 function renderChildAdminList(){
   const cs = (APP.children||[]);
   if(!cs.length){
@@ -965,6 +971,7 @@ function renderChildAdminList(){
     });
   });
 }
+
 function renderLinkDropdowns(){
   linkChildSelect.innerHTML = `<option value="">Child</option>` +
     (APP.children||[]).map(c=>`<option value="${escA(c.id)}">${esc(c.name||"")}</option>`).join("");
@@ -974,6 +981,7 @@ function renderLinkDropdowns(){
 
   linkSummary.textContent = `${(APP.children||[]).length} children • ${(APP.guardians||[]).length} parents • max 2`;
 }
+
 function renderPending(){
   pendingCount.textContent = `${(APP.pending||[]).length} pending`;
   const list = (APP.pending||[]);
@@ -1008,6 +1016,7 @@ function renderPending(){
     btn.addEventListener("click", ()=>openStaffApproveModal(btn.getAttribute("data-approve")));
   });
 }
+
 function renderLogs(){
   const rows = (APP.logs||[]);
   logCount.textContent = `${rows.length} entries`;
@@ -1043,11 +1052,12 @@ function openParentConfirmModal(action){
   const child = APP.children.find(c=>c.id===APP.selectedChildId);
   if(!child) return setStatus("Missing child.", "err");
 
-  const alreadyPending = (APP.pending||[]).some(p => p.childId===child.id && p.action===action);
-  if(alreadyPending) return setStatus("Already pending.", "err");
+  // FIX #2: Only ONE pending per child (regardless of action)
+  const alreadyPending = (APP.pending||[]).some(p => p.childId===child.id);
+  if(alreadyPending) return setStatus("This child already has a pending request.", "err");
 
-  const last = (APP.logs||[]).find(l => l.childId===child.id);
-  if(last && last.action===action) return setStatus("Already recorded.", "err");
+  // FIX #1: prevent duplicate action using child.lastAction (no logs needed)
+  if(child.lastAction === action) return setStatus("Already recorded.", "err");
 
   APP.parentPendingAction = action;
   pMAction.textContent = action==="DROP_OFF" ? "Drop-off" : "Pick-up";
@@ -1057,10 +1067,12 @@ function openParentConfirmModal(action){
   pMNotes.textContent = (pNotes.value||"").trim() || "-";
   parentConfirmModal.classList.remove("hidden");
 }
+
 function closeParentModal(){
   parentConfirmModal.classList.add("hidden");
   APP.parentPendingAction = null;
 }
+
 async function commitPending(){
   const action = APP.parentPendingAction;
   if(!action) return;
@@ -1068,6 +1080,10 @@ async function commitPending(){
   const email = normalizeEmail(AUTH.currentUser?.email);
   const child = APP.children.find(c=>c.id===APP.selectedChildId);
   if(!child || !email) return;
+
+  // Re-check one-pending-per-child right before commit
+  const stillPending = (APP.pending||[]).some(p => p.childId===child.id);
+  if(stillPending) return setStatus("This child already has a pending request.", "err");
 
   await schoolRef().collection("pending").add({
     date: todayKey(),
@@ -1100,16 +1116,19 @@ function openStaffApproveModal(pendingId){
   sMNotes.textContent = req.notes || "-";
   staffApproveModal.classList.remove("hidden");
 }
+
 function closeStaffModal(){
   staffApproveModal.classList.add("hidden");
   APP.staffSelectedPendingId = null;
 }
+
 async function staffReject(){
   if(!APP.staffSelectedPendingId) return;
   await schoolRef().collection("pending").doc(APP.staffSelectedPendingId).delete();
   closeStaffModal();
   setStatus("Rejected.", "info");
 }
+
 async function staffApprove(){
   if(!APP.staffSelectedPendingId) return;
   if(!String(staffName.value||"").trim()) return setStatus("Enter staff name.", "err");
@@ -1119,7 +1138,10 @@ async function staffApprove(){
   const req = reqSnap.data();
 
   const batch = DB.batch();
-  const logRef = schoolRef().collection("logs").doc();
+  const sref = schoolRef();
+
+  // write log entry
+  const logRef = sref.collection("logs").doc();
   batch.set(logRef, {
     date: todayKey(),
     action: req.action,
@@ -1132,7 +1154,18 @@ async function staffApprove(){
     staffName: String(staffName.value||"").trim(),
     staffTimeTs: firebase.firestore.FieldValue.serverTimestamp()
   });
-  batch.delete(schoolRef().collection("pending").doc(APP.staffSelectedPendingId));
+
+  // FIX #1/#3: update child doc with lastAction so parents can see status WITHOUT reading logs
+  const childRef = sref.collection("children").doc(req.childId);
+  batch.set(childRef, {
+    lastAction: req.action, // "DROP_OFF" | "PICK_UP"
+    lastActionAt: firebase.firestore.FieldValue.serverTimestamp(),
+    lastUpdatedBy: String(staffName.value||"").trim()
+  }, { merge: true });
+
+  // delete pending
+  batch.delete(sref.collection("pending").doc(APP.staffSelectedPendingId));
+
   await batch.commit();
 
   closeStaffModal();
@@ -1174,6 +1207,10 @@ async function addChild(){
   await schoolRef().collection("children").add({
     name,
     guardianEmails: [],
+    // new status fields (optional, but helpful)
+    lastAction: null,
+    lastActionAt: null,
+    lastUpdatedBy: "",
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
   newChildName.value = "";
@@ -1306,15 +1343,19 @@ async function sendParentEmailLink(){
 
   setSchoolCode(code);
 
+  // FIX #4: ensure link points back to same hosted page w/ school param
   const url = baseAppUrlWithParams({ mode:"parent", school: code });
 
-  const actionCodeSettings = { url, handleCodeInApp: true };
+  const actionCodeSettings = {
+    url,
+    handleCodeInApp: true
+  };
 
   await AUTH.sendSignInLinkToEmail(email, actionCodeSettings);
 
   localStorage.setItem(LS_PARENT_EMAIL, email);
   emailLinkHint.classList.remove("hidden");
-  setStatus("Login link sent. Check inbox + spam.", "ok");
+  setStatus("Login link sent. Check inbox + spam (and Promotions).", "ok");
 }
 
 async function completeEmailLinkIfPresent(){
@@ -1326,6 +1367,7 @@ async function completeEmailLinkIfPresent(){
   const school = (u.searchParams.get("school") || "").trim().toUpperCase();
   if(school) setSchoolCode(school);
 
+  // FIX #4: cross-device reliability
   let email = localStorage.getItem(LS_PARENT_EMAIL);
   if(!email) email = normalizeEmail(prompt("Confirm your email to finish login:") || "");
   if(!email) return setStatus("Email is required to finish login.", "err");
@@ -1333,7 +1375,8 @@ async function completeEmailLinkIfPresent(){
   await AUTH.signInWithEmailLink(email, window.location.href);
   localStorage.removeItem(LS_PARENT_EMAIL);
 
-  window.history.replaceState({}, document.title, location.pathname);
+  // remove query/hash noise after login
+  window.history.replaceState({}, document.title, location.pathname + (APP.schoolCode ? `?school=${encodeURIComponent(APP.schoolCode)}` : ""));
 }
 
 /* ================= Auth state router ================= */
