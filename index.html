@@ -481,17 +481,17 @@
   </div>
 
 <script>
-/* ================= Firebase init =================
-   NOTE: Firebase "apiKey" is not a secret, but GitHub flags it.
-   Restrict it in Google Cloud Console -> APIs & Services -> Credentials -> API Key -> HTTP referrers. */
+/* ============================================================
+   Firebase init
+   ============================================================ */
 const firebaseConfig = {
-  apiKey: "AIzaSyC0vDzgPZllUU_gYU0iIYPiT4OWbj-eYHQ",
-  authDomain: "preschool-a9bb0.firebaseapp.com",
-  projectId: "preschool-a9bb0",
-  storageBucket: "preschool-a9bb0.firebasestorage.app",
-  messagingSenderId: "462699240938",
-  appId: "1:462699240938:web:fad34d16574a062ce42693",
-  measurementId: "G-PEL1T3XE2B"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID",
+  measurementId: "YOUR_MEASUREMENT_ID"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -499,11 +499,12 @@ try { firebase.analytics(); } catch(e) {}
 
 const AUTH = firebase.auth();
 AUTH.useDeviceLanguage();
-
 const DB   = firebase.firestore();
 DB.enableNetwork().catch(()=>{});
 
-/* ================= Helpers ================= */
+/* ============================================================
+   Helpers
+   ============================================================ */
 const pad2 = n => String(n).padStart(2,"0");
 const todayKey = () => { const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; };
 const nowLocal = () => { const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`; };
@@ -534,9 +535,9 @@ function safeSetInput(el, value){
   el.value = value ?? "";
 }
 
+// Build a clean "continue URL" that always points back to THIS hosted page
 function baseAppUrlWithParams(paramsObj){
-  // Works for GitHub Pages, Firebase Hosting, etc.
-  const cleanPath = location.pathname;
+  const cleanPath = location.pathname; // works for GitHub Pages + Firebase Hosting
   const u = new URL(location.origin + cleanPath);
   Object.entries(paramsObj || {}).forEach(([k,v]) => u.searchParams.set(k, v));
   return u.toString();
@@ -544,13 +545,15 @@ function baseAppUrlWithParams(paramsObj){
 
 function guardHosted(){
   if(location.protocol === "file:"){
-    setStatus("This app must be opened from a hosted URL (not file://). Use GitHub Pages or a local server.", "err");
+    setStatus("This app must be opened from a hosted URL (not file://). Use GitHub Pages / Firebase Hosting / local server.", "err");
     return false;
   }
   return true;
 }
 
-/* ================= DOM ================= */
+/* ============================================================
+   DOM
+   ============================================================ */
 const subTitle = document.getElementById("subTitle");
 const logoutBtn = document.getElementById("logoutBtn");
 const offlineBar = document.getElementById("offlineBar");
@@ -648,7 +651,9 @@ const sMReqTime = document.getElementById("sMReqTime");
 const sMConfTime = document.getElementById("sMConfTime");
 const sMNotes = document.getElementById("sMNotes");
 
-/* ================= App state ================= */
+/* ============================================================
+   App state
+   ============================================================ */
 const LS_SCHOOL = "PRESCHOOL_SCHOOL_CODE";
 const LS_PARENT_EMAIL = "PRESCHOOL_PARENT_EMAIL_FOR_LINK";
 
@@ -670,7 +675,9 @@ let APP = {
   unsub: []
 };
 
-/* ================= Views ================= */
+/* ============================================================
+   Views
+   ============================================================ */
 function showRolePick() {
   rolePickView.classList.remove("hidden");
   staffAuthCard.classList.add("hidden");
@@ -739,13 +746,24 @@ function schoolRef(){
   return DB.collection("schools").doc(APP.schoolCode);
 }
 
-/* ================= Security routing: staff allow-list ================= */
+/* ============================================================
+   Staff allow-list check (SAFE: never breaks parent login)
+   ============================================================ */
 async function isStaffAllowListed(uid){
-  const doc = await schoolRef().collection("staff").doc(uid).get();
-  return doc.exists;
+  try{
+    const doc = await schoolRef().collection("staff").doc(uid).get();
+    return doc.exists;
+  } catch(e){
+    // If rules block this read, treat as NOT staff (parent) instead of failing login
+    const msg = String(e?.message || "").toLowerCase();
+    if(msg.includes("permission") || msg.includes("permission-denied")) return false;
+    throw e;
+  }
 }
 
-/* ================= Firestore sync ================= */
+/* ============================================================
+   Firestore sync
+   ============================================================ */
 function onSnapError(err){
   console.error(err);
   const msg = String(err?.message||"Error");
@@ -818,8 +836,7 @@ function bindSchoolDataForParent(){
     }, onSnapError)
   );
 
-  // Parent reads children (linked via guardianEmails).
-  // Status comes from children.lastAction (written by staff on approve) -> NO parent logs query -> NO composite index.
+  // Parent reads children linked by guardianEmails. Status comes from child.lastAction.
   APP.unsub.push(
     sref.collection("children")
       .where("guardianEmails","array-contains", email)
@@ -837,22 +854,17 @@ function bindSchoolDataForParent(){
         APP.pending = snap.docs.map(d=>({ id:d.id, ...d.data() }))
           .sort((a,b)=> (b.requestedAtTs?.toMillis?.()||0) - (a.requestedAtTs?.toMillis?.()||0) );
         renderParentPending();
-        renderParentKids(); // so pending can be indicated if you later want
       }, onSnapError)
   );
 }
 
-/* ================= Render ================= */
+/* ============================================================
+   Render
+   ============================================================ */
 function renderParentHeader(){
   const parts = [APP.settings.schoolName, APP.settings.className].filter(Boolean);
   parentHeaderInfo.textContent = parts.join(" • ");
   parentIdentityText.textContent = AUTH.currentUser?.email || "";
-}
-
-// FIX #1: status now comes from children.lastAction (not logs)
-function latestActionForChild(childId){
-  const c = (APP.children||[]).find(x => x.id === childId);
-  return c?.lastAction || null; // "DROP_OFF" | "PICK_UP" | null
 }
 
 function clearParentSelection(){
@@ -872,8 +884,6 @@ function renderParentKids(){
 
   parentKidsList.innerHTML = kids.map(c=>{
     const st = c.lastAction || null;
-
-    // Only show pill if a real lastAction exists
     let pillHtml = "";
     if(st === "DROP_OFF"){
       pillHtml = `<span class="text-xs px-3 py-1 rounded-full border bg-emerald-400/10 border-emerald-200/20 text-emerald-50">IN</span>`;
@@ -894,7 +904,6 @@ function renderParentKids(){
       APP.selectedChildId = btn.getAttribute("data-kid");
       const child = APP.children.find(c=>c.id===APP.selectedChildId);
       pSelectedChild.textContent = child?.name || "Select a child";
-
       const st = child?.lastAction || null;
       pSelectedStatus.textContent = st ? `Status: ${st==="DROP_OFF"?"IN":"OUT"}` : "";
       setStatus("Selected.", "ok");
@@ -1044,7 +1053,9 @@ function renderLogs(){
   }).join("");
 }
 
-/* ================= Parent request flow ================= */
+/* ============================================================
+   Parent request flow
+   ============================================================ */
 function openParentConfirmModal(action){
   if(APP.role!=="parent") return setStatus("Login as parent.", "err");
   if(!APP.selectedChildId) return setStatus("Select a child.", "err");
@@ -1052,11 +1063,11 @@ function openParentConfirmModal(action){
   const child = APP.children.find(c=>c.id===APP.selectedChildId);
   if(!child) return setStatus("Missing child.", "err");
 
-  // FIX #2: Only ONE pending per child (regardless of action)
+  // only one pending per child
   const alreadyPending = (APP.pending||[]).some(p => p.childId===child.id);
   if(alreadyPending) return setStatus("This child already has a pending request.", "err");
 
-  // FIX #1: prevent duplicate action using child.lastAction (no logs needed)
+  // prevent duplicate action using child.lastAction
   if(child.lastAction === action) return setStatus("Already recorded.", "err");
 
   APP.parentPendingAction = action;
@@ -1081,7 +1092,6 @@ async function commitPending(){
   const child = APP.children.find(c=>c.id===APP.selectedChildId);
   if(!child || !email) return;
 
-  // Re-check one-pending-per-child right before commit
   const stillPending = (APP.pending||[]).some(p => p.childId===child.id);
   if(stillPending) return setStatus("This child already has a pending request.", "err");
 
@@ -1102,7 +1112,9 @@ async function commitPending(){
   setStatus("Sent to staff.", "ok");
 }
 
-/* ================= Staff approve flow ================= */
+/* ============================================================
+   Staff approve flow
+   ============================================================ */
 function openStaffApproveModal(pendingId){
   const req = (APP.pending||[]).find(p=>p.id===pendingId);
   if(!req) return;
@@ -1133,14 +1145,14 @@ async function staffApprove(){
   if(!APP.staffSelectedPendingId) return;
   if(!String(staffName.value||"").trim()) return setStatus("Enter staff name.", "err");
 
-  const reqSnap = await schoolRef().collection("pending").doc(APP.staffSelectedPendingId).get();
+  const sref = schoolRef();
+  const reqSnap = await sref.collection("pending").doc(APP.staffSelectedPendingId).get();
   if(!reqSnap.exists) return setStatus("Pending not found.", "err");
   const req = reqSnap.data();
 
   const batch = DB.batch();
-  const sref = schoolRef();
 
-  // write log entry
+  // Write log
   const logRef = sref.collection("logs").doc();
   batch.set(logRef, {
     date: todayKey(),
@@ -1155,7 +1167,7 @@ async function staffApprove(){
     staffTimeTs: firebase.firestore.FieldValue.serverTimestamp()
   });
 
-  // FIX #1/#3: update child doc with lastAction so parents can see status WITHOUT reading logs
+  // Update child status so parent can see IN/OUT without reading logs
   const childRef = sref.collection("children").doc(req.childId);
   batch.set(childRef, {
     lastAction: req.action, // "DROP_OFF" | "PICK_UP"
@@ -1163,7 +1175,7 @@ async function staffApprove(){
     lastUpdatedBy: String(staffName.value||"").trim()
   }, { merge: true });
 
-  // delete pending
+  // Delete pending
   batch.delete(sref.collection("pending").doc(APP.staffSelectedPendingId));
 
   await batch.commit();
@@ -1172,7 +1184,9 @@ async function staffApprove(){
   setStatus("Approved.", "ok");
 }
 
-/* ================= Staff CRUD ================= */
+/* ============================================================
+   Staff CRUD
+   ============================================================ */
 async function saveSettings(){
   await schoolRef().collection("settings").doc("main").set({
     schoolName: (schoolName.value||"").trim(),
@@ -1207,7 +1221,6 @@ async function addChild(){
   await schoolRef().collection("children").add({
     name,
     guardianEmails: [],
-    // new status fields (optional, but helpful)
     lastAction: null,
     lastActionAt: null,
     lastUpdatedBy: "",
@@ -1240,7 +1253,9 @@ async function linkParentToChild(){
   setStatus("Linked.", "ok");
 }
 
-/* ================= Export + archive + clear ================= */
+/* ============================================================
+   Export + archive + clear
+   ============================================================ */
 async function exportAndArchive(kind){
   if(APP.role!=="staff") return setStatus("Staff only.", "err");
   if(!APP.logs.length) return setStatus("No logs.", "err");
@@ -1332,7 +1347,9 @@ async function clearToday(){
   setStatus("Cleared.", "ok");
 }
 
-/* ================= Email Link Auth (Parent) ================= */
+/* ============================================================
+   Email Link Auth (Parent)
+   ============================================================ */
 async function sendParentEmailLink(){
   if(!guardHosted()) return;
 
@@ -1343,19 +1360,25 @@ async function sendParentEmailLink(){
 
   setSchoolCode(code);
 
-  // FIX #4: ensure link points back to same hosted page w/ school param
+  // Continue URL: this same page, with school param
   const url = baseAppUrlWithParams({ mode:"parent", school: code });
 
-  const actionCodeSettings = {
-    url,
-    handleCodeInApp: true
-  };
+  const actionCodeSettings = { url, handleCodeInApp: true };
 
-  await AUTH.sendSignInLinkToEmail(email, actionCodeSettings);
+  // Disable button to avoid double-send
+  sendEmailLinkBtn.disabled = true;
+  const oldText = sendEmailLinkBtn.textContent;
+  sendEmailLinkBtn.textContent = "Sending...";
+  try{
+    await AUTH.sendSignInLinkToEmail(email, actionCodeSettings);
+  } finally {
+    sendEmailLinkBtn.disabled = false;
+    sendEmailLinkBtn.textContent = oldText;
+  }
 
   localStorage.setItem(LS_PARENT_EMAIL, email);
   emailLinkHint.classList.remove("hidden");
-  setStatus("Login link sent. Check inbox + spam (and Promotions).", "ok");
+  setStatus("Login link sent. Check inbox + spam/promotions.", "ok");
 }
 
 async function completeEmailLinkIfPresent(){
@@ -1367,7 +1390,6 @@ async function completeEmailLinkIfPresent(){
   const school = (u.searchParams.get("school") || "").trim().toUpperCase();
   if(school) setSchoolCode(school);
 
-  // FIX #4: cross-device reliability
   let email = localStorage.getItem(LS_PARENT_EMAIL);
   if(!email) email = normalizeEmail(prompt("Confirm your email to finish login:") || "");
   if(!email) return setStatus("Email is required to finish login.", "err");
@@ -1375,11 +1397,14 @@ async function completeEmailLinkIfPresent(){
   await AUTH.signInWithEmailLink(email, window.location.href);
   localStorage.removeItem(LS_PARENT_EMAIL);
 
-  // remove query/hash noise after login
-  window.history.replaceState({}, document.title, location.pathname + (APP.schoolCode ? `?school=${encodeURIComponent(APP.schoolCode)}` : ""));
+  // Clean URL after login, keep school param
+  const clean = location.pathname + (APP.schoolCode ? `?school=${encodeURIComponent(APP.schoolCode)}` : "");
+  window.history.replaceState({}, document.title, clean);
 }
 
-/* ================= Auth state router ================= */
+/* ============================================================
+   Auth state router
+   ============================================================ */
 async function authStateReady(user){
   APP.user = user || null;
 
@@ -1390,6 +1415,7 @@ async function authStateReady(user){
     return;
   }
 
+  // Ensure school code present
   const saved = localStorage.getItem(LS_SCHOOL) || "";
   if(!APP.schoolCode && saved) setSchoolCode(saved);
 
@@ -1401,6 +1427,7 @@ async function authStateReady(user){
 
   try{
     const staffOk = await isStaffAllowListed(APP.user.uid);
+
     if(staffOk){
       APP.role = "staff";
       showStaff();
@@ -1409,6 +1436,7 @@ async function authStateReady(user){
       return;
     }
 
+    // default to parent
     APP.role = "parent";
     showParent();
     renderParentHeader();
@@ -1416,13 +1444,13 @@ async function authStateReady(user){
     setStatus("Parent signed in.", "ok");
   } catch(e){
     console.error(e);
-    await AUTH.signOut();
-    showRolePick();
-    setStatus("Access check failed. Verify rules + allow-list.", "err");
+    setStatus(e?.message || "Auth routing error.", "err");
   }
 }
 
-/* ================= Events ================= */
+/* ============================================================
+   Events
+   ============================================================ */
 logoutBtn.addEventListener("click", async ()=>{
   stopListeners();
   await AUTH.signOut();
@@ -1498,14 +1526,18 @@ staffApproveModal.addEventListener("click", (e)=>{ if(e.target===staffApproveMod
 sModalRejectBtn.addEventListener("click", staffReject);
 sModalApproveBtn.addEventListener("click", staffApprove);
 
-/* ================= Boot ================= */
+/* ============================================================
+   Boot
+   ============================================================ */
 async function boot(){
   updateOfflineUI();
 
+  // Read school from URL if present
   const u = new URL(window.location.href);
   const school = (u.searchParams.get("school") || "").trim().toUpperCase();
   if(school) setSchoolCode(school);
 
+  // Restore school from localStorage
   const saved = localStorage.getItem(LS_SCHOOL) || "";
   if(saved){
     staffSchoolCode.value = saved;
