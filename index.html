@@ -66,6 +66,10 @@
 
         <div class="flex items-center gap-2">
           <span id="schoolBadge" class="hidden sm:inline text-xs px-3 py-1 rounded-full bg-white/10 border border-white/15 text-white/90"></span>
+          <button id="switchSchoolBtn"
+            class="hidden px-3 py-1 rounded-xl text-xs font-semibold bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+            Switch School
+          </button>
           <button id="logoutBtn"
             class="hidden px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
             Logout
@@ -123,11 +127,6 @@
                        focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
                 placeholder="School code (e.g., ABC123)"/>
 
-              <input id="ownerClaimCode" autocomplete="off"
-                class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                       focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
-                placeholder="Owner claim code (optional, for new schools)"/>
-
               <input id="staffEmail" type="email" autocomplete="username"
                 class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
                        focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
@@ -147,6 +146,13 @@
                 class="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
                 Create staff account
               </button>
+
+              <div class="text-center">
+                <button id="forgotPasswordBtn"
+                  class="text-white/70 hover:text-white text-sm underline transition">
+                  Forgot password?
+                </button>
+              </div>
 
               <div class="text-white/60 text-xs">
                 New school: first staff who logs in can “claim” the school as owner (optional claim code).
@@ -262,6 +268,11 @@
                 <div class="text-white/70 text-xs">Pending</div>
                 <div id="parentPendingList" class="mt-2 text-white/85 text-sm"></div>
               </div>
+
+              <div class="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div class="text-white/70 text-xs">Announcements</div>
+                <div id="parentAnnouncementsList" class="mt-2 text-white/85 text-sm"></div>
+              </div>
             </div>
           </div>
 
@@ -281,6 +292,10 @@
             </div>
 
             <div class="flex flex-wrap gap-2">
+              <button id="sendAnnouncementBtn"
+                class="px-4 py-2 rounded-xl bg-purple-500 text-white font-semibold hover:bg-purple-600 transition">
+                📢 Send Announcement
+              </button>
               <button id="exportPdfBtn"
                 class="px-4 py-2 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600 transition">
                 Export PDF & Clear
@@ -526,6 +541,47 @@
     </div>
   </div>
 
+  <!-- Announcement modal -->
+  <div id="announcementModal" class="hidden fixed inset-0 z-50">
+    <div class="absolute inset-0 bg-black/60"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="w-full max-w-lg rounded-3xl bg-white text-slate-900 shadow-2xl">
+        <div class="p-5 md:p-6">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold">Send Announcement</h3>
+            <button id="aModalCloseBtn" class="px-3 py-2 rounded-xl hover:bg-slate-100">✕</button>
+          </div>
+
+          <div class="mt-4 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">Subject</label>
+              <input id="announcementSubject" type="text" maxlength="100"
+                class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="Announcement subject"/>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">Message</label>
+              <textarea id="announcementMessage" rows="4" maxlength="500"
+                class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                placeholder="Type your announcement message here..."></textarea>
+              <div class="text-xs text-slate-500 mt-1">Max 500 characters</div>
+            </div>
+
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <div class="text-sm text-slate-600">This announcement will be sent to all parents in your school.</div>
+            </div>
+          </div>
+
+          <div class="mt-5 grid grid-cols-2 gap-3">
+            <button id="aModalCancelBtn" class="px-4 py-3 rounded-2xl bg-slate-100 font-semibold hover:bg-slate-200">Cancel</button>
+            <button id="aModalSendBtn" class="px-4 py-3 rounded-2xl bg-purple-600 text-white font-semibold hover:bg-purple-700">Send Announcement</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <script>
 /* ============================================================
    Firebase init
@@ -598,6 +654,7 @@ function continueUrl(paramsObj){
    ============================================================ */
 const subTitle = document.getElementById("subTitle");
 const logoutBtn = document.getElementById("logoutBtn");
+const switchSchoolBtn = document.getElementById("switchSchoolBtn");
 const offlineBar = document.getElementById("offlineBar");
 const schoolBadge = document.getElementById("schoolBadge");
 
@@ -620,11 +677,11 @@ const parentView = document.getElementById("parentView");
 
 /* Auth - Staff */
 const staffSchoolCode = document.getElementById("staffSchoolCode");
-const ownerClaimCode = document.getElementById("ownerClaimCode");
 const staffEmail = document.getElementById("staffEmail");
 const staffPassword = document.getElementById("staffPassword");
 const staffLoginBtn = document.getElementById("staffLoginBtn");
 const staffCreateBtn = document.getElementById("staffCreateBtn");
+const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
 
 /* Auth - Parent */
 const parentSchoolCode = document.getElementById("parentSchoolCode");
@@ -636,6 +693,7 @@ const parentHeaderInfo = document.getElementById("parentHeaderInfo");
 const parentIdentityText = document.getElementById("parentIdentityText");
 const parentKidsList = document.getElementById("parentKidsList");
 const parentPendingList = document.getElementById("parentPendingList");
+const parentAnnouncementsList = document.getElementById("parentAnnouncementsList");
 const pSelectedChild = document.getElementById("pSelectedChild");
 const pSelectedStatus = document.getElementById("pSelectedStatus");
 const pNotes = document.getElementById("pNotes");
@@ -659,6 +717,7 @@ const saveSessionBtn = document.getElementById("saveSessionBtn");
 const clearTodayBtn  = document.getElementById("clearTodayBtn");
 const exportPdfBtn = document.getElementById("exportPdfBtn");
 const exportCsvBtn = document.getElementById("exportCsvBtn");
+const sendAnnouncementBtn = document.getElementById("sendAnnouncementBtn");
 
 const newGuardianName = document.getElementById("newGuardianName");
 const newGuardianEmail = document.getElementById("newGuardianEmail");
@@ -702,6 +761,13 @@ const sMReqTime = document.getElementById("sMReqTime");
 const sMConfTime = document.getElementById("sMConfTime");
 const sMNotes = document.getElementById("sMNotes");
 
+const announcementModal = document.getElementById("announcementModal");
+const aModalCloseBtn = document.getElementById("aModalCloseBtn");
+const aModalCancelBtn = document.getElementById("aModalCancelBtn");
+const aModalSendBtn = document.getElementById("aModalSendBtn");
+const announcementSubject = document.getElementById("announcementSubject");
+const announcementMessage = document.getElementById("announcementMessage");
+
 /* ============================================================
    App state
    ============================================================ */
@@ -720,6 +786,7 @@ let APP = {
   pending: [],
   logs: [],
   staffRoster: [],
+  announcements: [],
 
   selectedChildId: null,
   parentPendingAction: null,
@@ -737,7 +804,12 @@ function showRolePick() {
   staffView.classList.add("hidden");
   parentView.classList.add("hidden");
   logoutBtn.classList.add("hidden");
+  switchSchoolBtn.classList.add("hidden");
   subTitle.textContent = "Welcome";
+
+  // Clear school code inputs when switching schools
+  staffSchoolCode.value = "";
+  parentSchoolCode.value = "";
 }
 function showStaffAuth() {
   rolePickView.classList.add("hidden");
@@ -746,6 +818,7 @@ function showStaffAuth() {
   staffView.classList.add("hidden");
   parentView.classList.add("hidden");
   logoutBtn.classList.add("hidden");
+  switchSchoolBtn.classList.add("hidden");
   subTitle.textContent = "Staff login";
 }
 function showParentAuth() {
@@ -755,6 +828,7 @@ function showParentAuth() {
   staffView.classList.add("hidden");
   parentView.classList.add("hidden");
   logoutBtn.classList.add("hidden");
+  switchSchoolBtn.classList.add("hidden");
   subTitle.textContent = "Parent login";
 }
 function showStaff() {
@@ -764,6 +838,7 @@ function showStaff() {
   staffView.classList.remove("hidden");
   parentView.classList.add("hidden");
   logoutBtn.classList.remove("hidden");
+  switchSchoolBtn.classList.remove("hidden");
   subTitle.textContent = "Staff";
 }
 function showParent() {
@@ -773,6 +848,7 @@ function showParent() {
   staffView.classList.add("hidden");
   parentView.classList.remove("hidden");
   logoutBtn.classList.remove("hidden");
+  switchSchoolBtn.classList.remove("hidden");
   subTitle.textContent = "Parent";
 }
 
@@ -804,8 +880,7 @@ async function getSchoolMeta(){
 }
 
 async function tryClaimOwnerIfNewSchool(){
-  // Claim owner only if school doc does not exist.
-  // Optional: require claim code on first claim (stored in doc as claimCodeHash OR plain claimCode for small MVP).
+  // Automatically claim owner for new schools (no claim code required)
   const uid = AUTH.currentUser?.uid;
   if(!uid) return;
 
@@ -814,17 +889,11 @@ async function tryClaimOwnerIfNewSchool(){
     const snap = await tx.get(metaRef);
     if(snap.exists) return; // already has an owner
 
-    const claim = (ownerClaimCode.value || "").trim();
-    // OPTIONAL: enforce claim code for new schools. If blank, block.
-    if(!claim){
-      throw new Error("New school code: enter Owner claim code to create/claim this school.");
-    }
-
+    // Automatically create school for first user
     tx.set(metaRef, {
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       ownerUid: uid,
-      ownerEmail: normalizeEmail(AUTH.currentUser?.email),
-      ownerClaimCode: claim  // MVP: store plain. Later: hash it.
+      ownerEmail: normalizeEmail(AUTH.currentUser?.email)
     }, { merge: true });
 
     // Owner is also staff
@@ -970,6 +1039,16 @@ function bindSchoolDataForParent(){
         renderParentPending();
       }, onSnapError)
   );
+
+  APP.unsub.push(
+    sref.collection("announcements")
+      .orderBy("sentAtTs", "desc")
+      .limit(10)
+      .onSnapshot((snap)=>{
+        APP.announcements = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+        renderParentAnnouncements();
+      }, onSnapError)
+  );
 }
 
 /* ============================================================
@@ -1030,6 +1109,22 @@ function renderParentPending(){
   parentPendingList.innerHTML = list.length
     ? list.map(p=>`<div class="text-white/85">• ${esc(p.childName||"")} — ${p.action==="DROP_OFF"?"Drop-off":"Pick-up"} (waiting)</div>`).join("")
     : "None";
+}
+
+function renderParentAnnouncements(){
+  const announcements = (APP.announcements||[]);
+  if(!announcements.length){
+    parentAnnouncementsList.innerHTML = `<div class="text-white/60">No announcements</div>`;
+    return;
+  }
+
+  parentAnnouncementsList.innerHTML = announcements.map(a=>`
+    <div class="mb-3 pb-3 border-b border-white/10 last:border-b-0 last:pb-0 last:mb-0">
+      <div class="text-white font-semibold text-sm">${esc(a.subject)}</div>
+      <div class="text-white/80 text-xs mt-1">${esc(a.message)}</div>
+      <div class="text-white/50 text-xs mt-1">From: ${esc(a.sentBy)} • ${esc(a.sentAt)}</div>
+    </div>
+  `).join("");
 }
 
 function renderStaffRoster(){
@@ -1336,6 +1431,47 @@ async function staffApprove(){
 }
 
 /* ============================================================
+   Announcement flow
+   ============================================================ */
+function openAnnouncementModal(){
+  if(APP.role!=="staff" && APP.role!=="owner") return setStatus("Staff only.", "err");
+  announcementSubject.value = "";
+  announcementMessage.value = "";
+  announcementModal.classList.remove("hidden");
+}
+
+function closeAnnouncementModal(){
+  announcementModal.classList.add("hidden");
+}
+
+async function sendAnnouncement(){
+  if(APP.role!=="staff" && APP.role!=="owner") return setStatus("Staff only.", "err");
+
+  const subject = (announcementSubject.value||"").trim();
+  const message = (announcementMessage.value||"").trim();
+
+  if(!subject) return setStatus("Enter subject.", "err");
+  if(!message) return setStatus("Enter message.", "err");
+  if(message.length > 500) return setStatus("Message too long (max 500 chars).", "err");
+
+  try{
+    await schoolRef().collection("announcements").add({
+      subject,
+      message,
+      sentBy: AUTH.currentUser?.email || "Staff",
+      sentAt: nowLocal(),
+      sentAtTs: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    closeAnnouncementModal();
+    setStatus("Announcement sent to all parents.", "ok");
+  } catch(e){
+    console.error(e);
+    setStatus(e?.message || "Error sending announcement", "err");
+  }
+}
+
+/* ============================================================
    Staff CRUD
    ============================================================ */
 async function saveSettings(){
@@ -1473,7 +1609,7 @@ async function exportAndArchive(kind){
 
     doc.autoTable({
       startY: y,
-      head: [["Parent","Staff","Action","Child","Email","Note"]],
+      head: [["Parent Time","Staff Time","Action","Child","Parent Email","Notes"]],
       body,
       theme: "grid",
       styles: { font:"helvetica", fontSize: 9, cellPadding: 4, overflow:"linebreak" },
@@ -1585,20 +1721,20 @@ async function authStateReady(user){
     return;
   }
 
-  const saved = localStorage.getItem(LS_SCHOOL) || "";
-  if(!APP.schoolCode && saved) setSchoolCode(saved);
+  // Don't set school code from localStorage here - it should be set from login forms
+  // This allows users to login to different schools
 
   if(!APP.schoolCode){
-    await AUTH.signOut();
+    // If no school code is set, show role picker to let user choose
+    stopListeners();
     showRolePick();
-    return setStatus("Missing school code. Please enter School Code and login again.", "err");
+    return setStatus("Please select your role and enter school code to continue.", "info");
   }
 
-  // If staff came in and school doesn't exist, allow claim (transaction)
+  // If we have a school code, proceed with role determination
   try{
     await tryClaimOwnerIfNewSchool();
   } catch(e){
-    // Only block if school truly doesn't exist and claim code missing
     const msg = String(e?.message||"").trim();
     if(msg) setStatus(msg, "err");
   }
@@ -1638,6 +1774,16 @@ logoutBtn.addEventListener("click", async ()=>{
   showRolePick();
 });
 
+switchSchoolBtn.addEventListener("click", async ()=>{
+  stopListeners();
+  // Don't sign out, just reset the app state to allow school switching
+  APP.schoolCode = null;
+  APP.role = null;
+  APP.isOwner = false;
+  setStatus("Select a different school to continue.", "info");
+  showRolePick();
+});
+
 pickStaffBtn.addEventListener("click", showStaffAuth);
 pickParentBtn.addEventListener("click", showParentAuth);
 backToRole1.addEventListener("click", showRolePick);
@@ -1650,10 +1796,12 @@ staffCreateBtn.addEventListener("click", async ()=>{
     const pass  = (staffPassword.value||"").trim();
     if(!code) return setStatus("Enter school code.", "err");
     if(!email || !pass) return setStatus("Enter email/password.", "err");
+
+    // Set school code from form BEFORE account creation
     setSchoolCode(code);
 
     await AUTH.createUserWithEmailAndPassword(email, pass);
-    setStatus("Account created. Now Login. If new school, enter Owner claim code and login to claim ownership.", "ok");
+    setStatus("Account created. Now login with your credentials.", "ok");
   } catch(e){
     console.error(e);
     setStatus(e?.message || "Error", "err");
@@ -1667,12 +1815,27 @@ staffLoginBtn.addEventListener("click", async ()=>{
     const pass  = (staffPassword.value||"").trim();
     if(!code) return setStatus("Enter school code.", "err");
     if(!email || !pass) return setStatus("Enter email/password.", "err");
+
+    // Set school code from login form BEFORE authentication
     setSchoolCode(code);
 
     await AUTH.signInWithEmailAndPassword(email, pass);
   } catch(e){
     console.error(e);
     setStatus(e?.message || "Error", "err");
+  }
+});
+
+forgotPasswordBtn.addEventListener("click", async ()=>{
+  try{
+    const email = normalizeEmail(staffEmail.value||"");
+    if(!email || !email.includes("@")) return setStatus("Enter a valid email address first.", "err");
+
+    await AUTH.sendPasswordResetEmail(email);
+    setStatus("Password reset email sent. Check your inbox.", "ok");
+  } catch(e){
+    console.error(e);
+    setStatus(e?.message || "Error sending reset email", "err");
   }
 });
 
@@ -1708,6 +1871,12 @@ staffApproveModal.addEventListener("click", (e)=>{ if(e.target===staffApproveMod
 sModalRejectBtn.addEventListener("click", staffReject);
 sModalApproveBtn.addEventListener("click", staffApprove);
 
+sendAnnouncementBtn.addEventListener("click", openAnnouncementModal);
+aModalCloseBtn.addEventListener("click", closeAnnouncementModal);
+aModalCancelBtn.addEventListener("click", closeAnnouncementModal);
+announcementModal.addEventListener("click", (e)=>{ if(e.target===announcementModal) closeAnnouncementModal(); });
+aModalSendBtn.addEventListener("click", sendAnnouncement);
+
 /* ============================================================
    Boot
    ============================================================ */
@@ -1718,12 +1887,8 @@ async function boot(){
   const school = (u.searchParams.get("school") || "").trim().toUpperCase();
   if(school) setSchoolCode(school);
 
-  const saved = localStorage.getItem(LS_SCHOOL) || "";
-  if(saved){
-    staffSchoolCode.value = saved;
-    parentSchoolCode.value = saved;
-    if(!APP.schoolCode) setSchoolCode(saved);
-  }
+  // Don't pre-fill school code from localStorage - let users choose during login
+  // This allows switching between different schools
 
   showRolePick();
 
