@@ -88,6 +88,7 @@
 
     <!-- AUTH -->
     <section id="authShell" class="space-y-6">
+
       <!-- Role picker -->
       <section id="rolePickView">
         <div class="max-w-xl mx-auto rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card p-6">
@@ -99,6 +100,10 @@
             <button id="pickParentBtn" class="px-4 py-4 rounded-2xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition">
               👨‍👩‍👧 Parent
             </button>
+          </div>
+
+          <div class="mt-5 text-white/70 text-sm">
+            Use a <b>School Code</b> to separate different schools. Example: <b>ABC123</b>.
           </div>
         </div>
       </section>
@@ -116,7 +121,12 @@
               <input id="staffSchoolCode" autocomplete="off"
                 class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
                        focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
-                placeholder="School code"/>
+                placeholder="School code (e.g., ABC123)"/>
+
+              <input id="ownerClaimCode" autocomplete="off"
+                class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                       focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
+                placeholder="Owner claim code (optional, for new schools)"/>
 
               <input id="staffEmail" type="email" autocomplete="username"
                 class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
@@ -139,8 +149,7 @@
               </button>
 
               <div class="text-white/60 text-xs">
-                After creating a staff account, the admin must allow-list your UID at:
-                <b>schools/{code}/staff/{uid}</b>
+                New school: first staff who logs in can “claim” the school as owner (optional claim code).
               </div>
 
               <button id="backToRole1"
@@ -151,7 +160,7 @@
           </div>
         </div>
 
-        <!-- Parent Auth (Email Link) -->
+        <!-- Parent Auth -->
         <div id="parentAuthCard" class="hidden rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card">
           <div class="p-6">
             <div class="flex items-center justify-between">
@@ -187,7 +196,6 @@
           </div>
         </div>
 
-        <!-- Email link helper -->
         <div id="emailLinkHint" class="hidden lg:col-span-2 rounded-3xl bg-white/10 border border-white/10 backdrop-blur-xl shadow-card">
           <div class="p-6 text-white/85 text-sm">
             If you opened the sign-in link on a different device, you may be prompted to confirm your email.
@@ -269,6 +277,7 @@
             <div>
               <h2 class="text-white font-semibold text-lg">Staff</h2>
               <p class="text-white/70 text-sm">Approve • Export • Archive</p>
+              <p id="staffRoleLine" class="text-white/60 text-xs mt-1"></p>
             </div>
 
             <div class="flex flex-wrap gap-2">
@@ -284,6 +293,43 @@
                 class="px-4 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
                 Clear today
               </button>
+            </div>
+          </div>
+
+          <!-- Owner-only: Staff Management -->
+          <div id="ownerPanel" class="hidden mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div class="flex items-center justify-between">
+              <div class="text-white/85 text-sm font-semibold">Owner: Staff Management</div>
+              <span class="text-xs px-3 py-1 rounded-full bg-fuchsia-400/10 border border-fuchsia-200/20 text-fuchsia-50">Owner only</span>
+            </div>
+
+            <div class="mt-4 grid md:grid-cols-3 gap-3">
+              <input id="promoteStaffUid"
+                class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                       focus:outline-none focus:ring-2 focus:ring-fuchsia-300/40"
+                placeholder="Staff UID (required)"/>
+              <input id="promoteStaffEmail"
+                class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                       focus:outline-none focus:ring-2 focus:ring-fuchsia-300/40"
+                placeholder="Staff email (optional)"/>
+              <button id="promoteBtn"
+                class="px-4 py-3 rounded-2xl bg-fuchsia-500 text-white font-semibold hover:bg-fuchsia-600 transition">
+                Add staff
+              </button>
+            </div>
+
+            <div class="mt-4 text-white/60 text-xs">
+              Tip: staff signs up → copy their UID from the Auth UID box below → owner adds them here.
+            </div>
+
+            <div class="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div class="text-white/70 text-xs">Your UID</div>
+              <div id="myUidBox" class="text-white font-mono text-sm mt-1"></div>
+            </div>
+
+            <div class="mt-4 rounded-2xl border border-white/10 bg-white/5">
+              <div class="p-3 border-b border-white/10 text-white/85 text-sm font-semibold">Current staff</div>
+              <div id="staffList" class="max-h-[260px] overflow-auto"></div>
             </div>
           </div>
 
@@ -482,16 +528,16 @@
 
 <script>
 /* ============================================================
-   Firebase init (FILL THESE)
+   Firebase init (PASTE REAL CONFIG HERE)
    ============================================================ */
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID",
-  measurementId: "YOUR_MEASUREMENT_ID"
+  apiKey: "PASTE_YOURS",
+  authDomain: "PASTE_YOURS",
+  projectId: "preschool-a9bb0",
+  storageBucket: "PASTE_YOURS",
+  messagingSenderId: "462699240938",
+  appId: "PASTE_YOURS",
+  measurementId: "PASTE_YOURS"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -534,7 +580,6 @@ function safeSetInput(el, value){
   el.value = value ?? "";
 }
 
-/* Hosted guard */
 function guardHosted(){
   if(location.protocol === "file:"){
     setStatus("This app must be opened from a hosted URL (not file://). Use GitHub Pages / Firebase Hosting / local server.", "err");
@@ -542,8 +587,6 @@ function guardHosted(){
   }
   return true;
 }
-
-/* Build continue URL: ALWAYS same page origin+path (works on GH Pages / Firebase Hosting) */
 function continueUrl(paramsObj){
   const u = new URL(location.origin + location.pathname);
   Object.entries(paramsObj || {}).forEach(([k,v]) => u.searchParams.set(k, v));
@@ -577,6 +620,7 @@ const parentView = document.getElementById("parentView");
 
 /* Auth - Staff */
 const staffSchoolCode = document.getElementById("staffSchoolCode");
+const ownerClaimCode = document.getElementById("ownerClaimCode");
 const staffEmail = document.getElementById("staffEmail");
 const staffPassword = document.getElementById("staffPassword");
 const staffLoginBtn = document.getElementById("staffLoginBtn");
@@ -600,6 +644,14 @@ const pickUpReqBtn  = document.getElementById("pickUpReqBtn");
 const clearParentSelectionBtn = document.getElementById("clearParentSelectionBtn");
 
 /* Staff */
+const staffRoleLine = document.getElementById("staffRoleLine");
+const ownerPanel = document.getElementById("ownerPanel");
+const myUidBox = document.getElementById("myUidBox");
+const staffList = document.getElementById("staffList");
+const promoteStaffUid = document.getElementById("promoteStaffUid");
+const promoteStaffEmail = document.getElementById("promoteStaffEmail");
+const promoteBtn = document.getElementById("promoteBtn");
+
 const schoolName = document.getElementById("schoolName");
 const className  = document.getElementById("className");
 const staffName  = document.getElementById("staffName");
@@ -658,19 +710,20 @@ const LS_PARENT_EMAIL = "PRESCHOOL_PARENT_EMAIL_FOR_LINK";
 
 let APP = {
   schoolCode: null,
-  role: null,              // "staff" | "parent"
+  role: null,              // "owner" | "staff" | "parent"
   user: null,
+  isOwner: false,
 
   settings: { schoolName:"", className:"", staffName:"" },
   guardians: [],
   children: [],
   pending: [],
   logs: [],
+  staffRoster: [],
 
   selectedChildId: null,
   parentPendingAction: null,
   staffSelectedPendingId: null,
-
   unsub: []
 };
 
@@ -745,19 +798,71 @@ function schoolRef(){
   return DB.collection("schools").doc(APP.schoolCode);
 }
 
+async function getSchoolMeta(){
+  const snap = await schoolRef().get();
+  return snap.exists ? snap.data() : null;
+async function tryClaimOwnerIfNewSchool(){
+  // Claim owner only if school doc does not exist.
+  // Optional: require claim code on first claim (stored in doc as claimCodeHash OR plain claimCode for small MVP).
+  const uid = AUTH.currentUser?.uid;
+  if(!uid) return;
+
+  const metaRef = schoolRef();
+  await DB.runTransaction(async (tx)=>{
+    const snap = await tx.get(metaRef);
+    if(snap.exists) return; // already has an owner
+
+    const claim = (ownerClaimCode.value || "").trim();
+    // OPTIONAL: enforce claim code for new schools. If blank, block.
+    if(!claim){
+      throw new Error("New school code: enter Owner claim code to create/claim this school.");
+    }
+
+    tx.set(metaRef, {
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      ownerUid: uid,
+      ownerEmail: normalizeEmail(AUTH.currentUser?.email),
+      ownerClaimCode: claim  // MVP: store plain. Later: hash it.
+    }, { merge: true });
+
+    // Owner is also staff
+    tx.set(metaRef.collection("staff").doc(uid), {
+      uid,
+      email: normalizeEmail(AUTH.currentUser?.email),
+      role: "owner",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    // seed settings doc
+    tx.set(metaRef.collection("settings").doc("main"), {
+      schoolName: "",
+      className: "",
+      staffName: ""
+    }, { merge: true });
+  });
+}
+
 /* ============================================================
-   Staff allow-list check
+   Staff allow-list + owner check
    ============================================================ */
-async function isStaffAllowListed(uid){
-  try{
-    const doc = await schoolRef().collection("staff").doc(uid).get();
-    return doc.exists;
-  } catch(e){
-    const msg = String(e?.message || "").toLowerCase();
-    // if rules block the read, treat as NOT staff instead of breaking login
-    if(msg.includes("permission") || msg.includes("permission-denied")) return false;
-    throw e;
-  }
+async function getMyRoleInSchool(){
+  const uid = AUTH.currentUser?.uid;
+  if(!uid) return { isStaff:false, isOwner:false, role:null };
+
+  const sref = schoolRef();
+
+  const [metaSnap, staffSnap] = await Promise.all([
+    sref.get().catch(()=>null),
+    sref.collection("staff").doc(uid).get().catch(()=>null)
+  ]);
+
+  const meta = metaSnap?.exists ? metaSnap.data() : null;
+  const isOwner = !!meta?.ownerUid && meta.ownerUid === uid;
+
+  const isStaff = !!staffSnap?.exists || isOwner;
+  const role = isOwner ? "owner" : (isStaff ? "staff" : null);
+
+  return { isStaff, isOwner, role, meta };
 }
 
 /* ============================================================
@@ -777,6 +882,15 @@ function onSnapError(err){
 function bindSchoolDataForStaff(){
   stopListeners();
   const sref = schoolRef();
+
+  // staff roster (owner panel)
+  APP.unsub.push(
+    sref.collection("staff").onSnapshot((snap)=>{
+      APP.staffRoster = snap.docs.map(d=>({ id:d.id, ...d.data() }))
+        .sort((a,b)=>String(a.email||a.id).localeCompare(String(b.email||b.id)));
+      renderStaffRoster();
+    }, onSnapError)
+  );
 
   APP.unsub.push(
     sref.collection("settings").doc("main").onSnapshot((doc)=>{
@@ -914,6 +1028,48 @@ function renderParentPending(){
   parentPendingList.innerHTML = list.length
     ? list.map(p=>`<div class="text-white/85">• ${esc(p.childName||"")} — ${p.action==="DROP_OFF"?"Drop-off":"Pick-up"} (waiting)</div>`).join("")
     : "None";
+}
+
+function renderStaffRoster(){
+  if(!APP.isOwner){
+    ownerPanel.classList.add("hidden");
+    return;
+  }
+  ownerPanel.classList.remove("hidden");
+  myUidBox.textContent = AUTH.currentUser?.uid || "-";
+
+  const list = (APP.staffRoster||[]);
+  if(!list.length){
+    staffList.innerHTML = `<div class="p-4 text-white/60 text-sm">No staff yet.</div>`;
+    return;
+  }
+  staffList.innerHTML = list.map(s=>{
+    const isOwner = s.role === "owner";
+    return `
+      <div class="p-3 border-b border-white/5 flex items-center justify-between gap-3">
+        <div>
+          <div class="text-white font-semibold">${esc(s.email||"(no email)")}</div>
+          <div class="text-white/60 text-xs font-mono">${esc(s.uid||s.id)}</div>
+          <div class="text-white/60 text-xs">${isOwner ? "Owner" : "Staff"}</div>
+        </div>
+        ${isOwner ? "" : `
+          <button data-demote="${escA(s.uid||s.id)}"
+            class="text-xs px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+            Remove
+          </button>
+        `}
+      </div>
+    `;
+  }).join("");
+
+  [...staffList.querySelectorAll("button[data-demote]")].forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const uid = btn.getAttribute("data-demote");
+      if(!confirm("Remove staff access for this user?")) return;
+      await schoolRef().collection("staff").doc(uid).delete();
+      setStatus("Staff removed.", "info");
+    });
+  });
 }
 
 function renderGuardianList(){
@@ -1061,11 +1217,9 @@ function openParentConfirmModal(action){
   const child = APP.children.find(c=>c.id===APP.selectedChildId);
   if(!child) return setStatus("Missing child.", "err");
 
-  // only one pending per child
   const alreadyPending = (APP.pending||[]).some(p => p.childId===child.id);
   if(alreadyPending) return setStatus("This child already has a pending request.", "err");
 
-  // prevent duplicate action using child.lastAction
   if(child.lastAction === action) return setStatus("Already recorded.", "err");
 
   APP.parentPendingAction = action;
@@ -1150,7 +1304,6 @@ async function staffApprove(){
 
   const batch = DB.batch();
 
-  // Write log
   const logRef = sref.collection("logs").doc();
   batch.set(logRef, {
     date: todayKey(),
@@ -1165,15 +1318,13 @@ async function staffApprove(){
     staffTimeTs: firebase.firestore.FieldValue.serverTimestamp()
   });
 
-  // Update child status
   const childRef = sref.collection("children").doc(req.childId);
   batch.set(childRef, {
-    lastAction: req.action, // "DROP_OFF" | "PICK_UP"
+    lastAction: req.action,
     lastActionAt: firebase.firestore.FieldValue.serverTimestamp(),
     lastUpdatedBy: String(staffName.value||"").trim()
   }, { merge: true });
 
-  // Delete pending
   batch.delete(sref.collection("pending").doc(APP.staffSelectedPendingId));
 
   await batch.commit();
@@ -1251,11 +1402,31 @@ async function linkParentToChild(){
   setStatus("Linked.", "ok");
 }
 
+/* Owner: add staff */
+async function ownerAddStaff(){
+  if(!APP.isOwner) return setStatus("Owner only.", "err");
+  const uid = (promoteStaffUid.value||"").trim();
+  const email = normalizeEmail(promoteStaffEmail.value||"");
+  if(!uid) return setStatus("Enter staff UID.", "err");
+
+  await schoolRef().collection("staff").doc(uid).set({
+    uid,
+    email: email || "",
+    role: "staff",
+    addedBy: AUTH.currentUser.uid,
+    addedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge:true });
+
+  promoteStaffUid.value = "";
+  promoteStaffEmail.value = "";
+  setStatus("Staff added.", "ok");
+}
+
 /* ============================================================
    Export + archive + clear
    ============================================================ */
 async function exportAndArchive(kind){
-  if(APP.role!=="staff") return setStatus("Staff only.", "err");
+  if(APP.role!=="staff" && APP.role!=="owner") return setStatus("Staff only.", "err");
   if(!APP.logs.length) return setStatus("No logs.", "err");
 
   const sref = schoolRef();
@@ -1318,7 +1489,6 @@ async function exportAndArchive(kind){
     logs: APP.logs.slice().reverse()
   }, { merge:true });
 
-  // clear pending + logs for today
   const batch = DB.batch();
   const pendSnap = await sref.collection("pending").get();
   pendSnap.forEach(d=>batch.delete(d.ref));
@@ -1330,7 +1500,7 @@ async function exportAndArchive(kind){
 }
 
 async function clearToday(){
-  if(APP.role!=="staff") return setStatus("Staff only.", "err");
+  if(APP.role!=="staff" && APP.role!=="owner") return setStatus("Staff only.", "err");
   if(!confirm("Clear today?")) return;
 
   const sref = schoolRef();
@@ -1347,7 +1517,7 @@ async function clearToday(){
 }
 
 /* ============================================================
-   Parent Email Link Auth (passwordless)
+   Email Link Auth (Parent)
    ============================================================ */
 async function sendParentEmailLink(){
   if(!guardHosted()) return;
@@ -1359,9 +1529,7 @@ async function sendParentEmailLink(){
 
   setSchoolCode(code);
 
-  // IMPORTANT: must be an authorized domain in Firebase Auth settings
   const url = continueUrl({ school: code, mode: "parent" });
-
   const actionCodeSettings = { url, handleCodeInApp: true };
 
   sendEmailLinkBtn.disabled = true;
@@ -1389,24 +1557,24 @@ async function completeEmailLinkIfPresent(){
   if(school) setSchoolCode(school);
 
   let email = localStorage.getItem(LS_PARENT_EMAIL);
-  if(!email){
-    email = normalizeEmail(prompt("Confirm your email to finish login:") || "");
-  }
+  if(!email) email = normalizeEmail(prompt("Confirm your email to finish login:") || "");
   if(!email) return setStatus("Email is required to finish login.", "err");
 
   await AUTH.signInWithEmailLink(email, window.location.href);
   localStorage.removeItem(LS_PARENT_EMAIL);
 
-  // Clean URL after login (remove oobCode, apiKey, etc) but keep school
   const clean = location.pathname + (APP.schoolCode ? `?school=${encodeURIComponent(APP.schoolCode)}` : "");
   window.history.replaceState({}, document.title, clean);
 }
 
 /* ============================================================
-   Auth state router
+   Auth router
    ============================================================ */
 async function authStateReady(user){
   APP.user = user || null;
+  APP.isOwner = false;
+  staffRoleLine.textContent = "";
+  ownerPanel.classList.add("hidden");
 
   if(!APP.user){
     APP.role = null;
@@ -1415,7 +1583,6 @@ async function authStateReady(user){
     return;
   }
 
-  // Ensure school code present
   const saved = localStorage.getItem(LS_SCHOOL) || "";
   if(!APP.schoolCode && saved) setSchoolCode(saved);
 
@@ -1425,18 +1592,29 @@ async function authStateReady(user){
     return setStatus("Missing school code. Please enter School Code and login again.", "err");
   }
 
+  // If staff came in and school doesn't exist, allow claim (transaction)
   try{
-    const staffOk = await isStaffAllowListed(APP.user.uid);
+    await tryClaimOwnerIfNewSchool();
+  } catch(e){
+    // Only block if school truly doesn't exist and claim code missing
+    const msg = String(e?.message||"").trim();
+    if(msg) setStatus(msg, "err");
+  }
 
-    if(staffOk){
-      APP.role = "staff";
+  try{
+    const info = await getMyRoleInSchool();
+    APP.isOwner = !!info.isOwner;
+
+    if(info.isStaff){
+      APP.role = APP.isOwner ? "owner" : "staff";
       showStaff();
       bindSchoolDataForStaff();
-      setStatus("Staff signed in.", "ok");
+      staffRoleLine.textContent = APP.isOwner ? "Role: OWNER" : "Role: STAFF";
+      renderStaffRoster();
+      setStatus(APP.isOwner ? "Owner signed in." : "Staff signed in.", "ok");
       return;
     }
 
-    // default to parent
     APP.role = "parent";
     showParent();
     renderParentHeader();
@@ -1473,7 +1651,7 @@ staffCreateBtn.addEventListener("click", async ()=>{
     setSchoolCode(code);
 
     await AUTH.createUserWithEmailAndPassword(email, pass);
-    setStatus("Account created. Admin must allow-list your UID.", "ok");
+    setStatus("Account created. Now Login. If new school, enter Owner claim code and login to claim ownership.", "ok");
   } catch(e){
     console.error(e);
     setStatus(e?.message || "Error", "err");
@@ -1510,6 +1688,9 @@ exportPdfBtn.addEventListener("click", ()=>exportAndArchive("pdf"));
 exportCsvBtn.addEventListener("click", ()=>exportAndArchive("csv"));
 clearTodayBtn.addEventListener("click", clearToday);
 
+/* Owner actions */
+promoteBtn.addEventListener("click", ownerAddStaff);
+
 /* Parent actions */
 clearParentSelectionBtn.addEventListener("click", clearParentSelection);
 dropOffReqBtn.addEventListener("click", ()=>openParentConfirmModal("DROP_OFF"));
@@ -1520,7 +1701,6 @@ pModalCancelBtn.addEventListener("click", closeParentModal);
 parentConfirmModal.addEventListener("click", (e)=>{ if(e.target===parentConfirmModal) closeParentModal(); });
 pModalConfirmBtn.addEventListener("click", commitPending);
 
-/* Staff modal actions */
 sModalCloseBtn.addEventListener("click", closeStaffModal);
 staffApproveModal.addEventListener("click", (e)=>{ if(e.target===staffApproveModal) closeStaffModal(); });
 sModalRejectBtn.addEventListener("click", staffReject);
@@ -1532,12 +1712,10 @@ sModalApproveBtn.addEventListener("click", staffApprove);
 async function boot(){
   updateOfflineUI();
 
-  // Read school from URL if present (important for magic link)
   const u = new URL(window.location.href);
   const school = (u.searchParams.get("school") || "").trim().toUpperCase();
   if(school) setSchoolCode(school);
 
-  // Restore school from localStorage
   const saved = localStorage.getItem(LS_SCHOOL) || "";
   if(saved){
     staffSchoolCode.value = saved;
@@ -1547,7 +1725,6 @@ async function boot(){
 
   showRolePick();
 
-  // If opened a magic link, finish sign-in first
   try { await completeEmailLinkIfPresent(); }
   catch(e){ console.error(e); setStatus(e?.message || "Error finishing email login", "err"); }
 
