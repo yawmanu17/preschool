@@ -801,6 +801,8 @@ function schoolRef(){
 async function getSchoolMeta(){
   const snap = await schoolRef().get();
   return snap.exists ? snap.data() : null;
+}
+
 async function tryClaimOwnerIfNewSchool(){
   // Claim owner only if school doc does not exist.
   // Optional: require claim code on first claim (stored in doc as claimCodeHash OR plain claimCode for small MVP).
