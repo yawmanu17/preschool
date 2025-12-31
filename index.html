@@ -482,7 +482,7 @@
 
 <script>
 /* ============================================================
-   Firebase init
+   Firebase init (FILL THESE)
    ============================================================ */
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
@@ -500,7 +500,6 @@ try { firebase.analytics(); } catch(e) {}
 const AUTH = firebase.auth();
 AUTH.useDeviceLanguage();
 const DB   = firebase.firestore();
-DB.enableNetwork().catch(()=>{});
 
 /* ============================================================
    Helpers
@@ -535,20 +534,20 @@ function safeSetInput(el, value){
   el.value = value ?? "";
 }
 
-// Build a clean "continue URL" that always points back to THIS hosted page
-function baseAppUrlWithParams(paramsObj){
-  const cleanPath = location.pathname; // works for GitHub Pages + Firebase Hosting
-  const u = new URL(location.origin + cleanPath);
-  Object.entries(paramsObj || {}).forEach(([k,v]) => u.searchParams.set(k, v));
-  return u.toString();
-}
-
+/* Hosted guard */
 function guardHosted(){
   if(location.protocol === "file:"){
     setStatus("This app must be opened from a hosted URL (not file://). Use GitHub Pages / Firebase Hosting / local server.", "err");
     return false;
   }
   return true;
+}
+
+/* Build continue URL: ALWAYS same page origin+path (works on GH Pages / Firebase Hosting) */
+function continueUrl(paramsObj){
+  const u = new URL(location.origin + location.pathname);
+  Object.entries(paramsObj || {}).forEach(([k,v]) => u.searchParams.set(k, v));
+  return u.toString();
 }
 
 /* ============================================================
@@ -747,15 +746,15 @@ function schoolRef(){
 }
 
 /* ============================================================
-   Staff allow-list check (SAFE: never breaks parent login)
+   Staff allow-list check
    ============================================================ */
 async function isStaffAllowListed(uid){
   try{
     const doc = await schoolRef().collection("staff").doc(uid).get();
     return doc.exists;
   } catch(e){
-    // If rules block this read, treat as NOT staff (parent) instead of failing login
     const msg = String(e?.message || "").toLowerCase();
+    // if rules block the read, treat as NOT staff instead of breaking login
     if(msg.includes("permission") || msg.includes("permission-denied")) return false;
     throw e;
   }
@@ -836,7 +835,6 @@ function bindSchoolDataForParent(){
     }, onSnapError)
   );
 
-  // Parent reads children linked by guardianEmails. Status comes from child.lastAction.
   APP.unsub.push(
     sref.collection("children")
       .where("guardianEmails","array-contains", email)
@@ -1167,7 +1165,7 @@ async function staffApprove(){
     staffTimeTs: firebase.firestore.FieldValue.serverTimestamp()
   });
 
-  // Update child status so parent can see IN/OUT without reading logs
+  // Update child status
   const childRef = sref.collection("children").doc(req.childId);
   batch.set(childRef, {
     lastAction: req.action, // "DROP_OFF" | "PICK_UP"
@@ -1320,6 +1318,7 @@ async function exportAndArchive(kind){
     logs: APP.logs.slice().reverse()
   }, { merge:true });
 
+  // clear pending + logs for today
   const batch = DB.batch();
   const pendSnap = await sref.collection("pending").get();
   pendSnap.forEach(d=>batch.delete(d.ref));
@@ -1348,7 +1347,7 @@ async function clearToday(){
 }
 
 /* ============================================================
-   Email Link Auth (Parent)
+   Parent Email Link Auth (passwordless)
    ============================================================ */
 async function sendParentEmailLink(){
   if(!guardHosted()) return;
@@ -1360,12 +1359,11 @@ async function sendParentEmailLink(){
 
   setSchoolCode(code);
 
-  // Continue URL: this same page, with school param
-  const url = baseAppUrlWithParams({ mode:"parent", school: code });
+  // IMPORTANT: must be an authorized domain in Firebase Auth settings
+  const url = continueUrl({ school: code, mode: "parent" });
 
   const actionCodeSettings = { url, handleCodeInApp: true };
 
-  // Disable button to avoid double-send
   sendEmailLinkBtn.disabled = true;
   const oldText = sendEmailLinkBtn.textContent;
   sendEmailLinkBtn.textContent = "Sending...";
@@ -1391,13 +1389,15 @@ async function completeEmailLinkIfPresent(){
   if(school) setSchoolCode(school);
 
   let email = localStorage.getItem(LS_PARENT_EMAIL);
-  if(!email) email = normalizeEmail(prompt("Confirm your email to finish login:") || "");
+  if(!email){
+    email = normalizeEmail(prompt("Confirm your email to finish login:") || "");
+  }
   if(!email) return setStatus("Email is required to finish login.", "err");
 
   await AUTH.signInWithEmailLink(email, window.location.href);
   localStorage.removeItem(LS_PARENT_EMAIL);
 
-  // Clean URL after login, keep school param
+  // Clean URL after login (remove oobCode, apiKey, etc) but keep school
   const clean = location.pathname + (APP.schoolCode ? `?school=${encodeURIComponent(APP.schoolCode)}` : "");
   window.history.replaceState({}, document.title, clean);
 }
@@ -1422,7 +1422,7 @@ async function authStateReady(user){
   if(!APP.schoolCode){
     await AUTH.signOut();
     showRolePick();
-    return setStatus("Missing school code.", "err");
+    return setStatus("Missing school code. Please enter School Code and login again.", "err");
   }
 
   try{
@@ -1532,7 +1532,7 @@ sModalApproveBtn.addEventListener("click", staffApprove);
 async function boot(){
   updateOfflineUI();
 
-  // Read school from URL if present
+  // Read school from URL if present (important for magic link)
   const u = new URL(window.location.href);
   const school = (u.searchParams.get("school") || "").trim().toUpperCase();
   if(school) setSchoolCode(school);
@@ -1547,7 +1547,7 @@ async function boot(){
 
   showRolePick();
 
-  // If the user opened a magic link, finish sign-in first
+  // If opened a magic link, finish sign-in first
   try { await completeEmailLinkIfPresent(); }
   catch(e){ console.error(e); setStatus(e?.message || "Error finishing email login", "err"); }
 
