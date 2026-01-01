@@ -122,10 +122,23 @@
             </div>
 
             <div class="mt-4 space-y-3">
-              <input id="staffSchoolCode" autocomplete="off"
-                class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                       focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
-                placeholder="School code (e.g., ABC123)"/>
+              <div>
+                <input id="staffSchoolCode" autocomplete="off" list="schoolCodesList"
+                  class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
+                         focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
+                  placeholder="School code (e.g., ABC123) - start typing or choose recent"/>
+                <datalist id="schoolCodesList"></datalist>
+              </div>
+
+              <!-- Recent Schools -->
+              <div id="recentSchoolsSection" class="hidden">
+                <div class="text-white/70 text-xs mb-2 flex items-center gap-2">
+                  <span>Recent Schools</span>
+                  <span class="text-white/50">•</span>
+                  <span class="text-white/50 text-xs">Click to select</span>
+                </div>
+                <div id="recentSchoolsList" class="flex flex-wrap gap-2"></div>
+              </div>
 
               <input id="staffEmail" type="email" autocomplete="username"
                 class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
@@ -682,6 +695,9 @@ const staffPassword = document.getElementById("staffPassword");
 const staffLoginBtn = document.getElementById("staffLoginBtn");
 const staffCreateBtn = document.getElementById("staffCreateBtn");
 const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
+const schoolCodesList = document.getElementById("schoolCodesList");
+const recentSchoolsSection = document.getElementById("recentSchoolsSection");
+const recentSchoolsList = document.getElementById("recentSchoolsList");
 
 /* Auth - Parent */
 const parentSchoolCode = document.getElementById("parentSchoolCode");
@@ -773,6 +789,7 @@ const announcementMessage = document.getElementById("announcementMessage");
    ============================================================ */
 const LS_SCHOOL = "PRESCHOOL_SCHOOL_CODE";
 const LS_PARENT_EMAIL = "PRESCHOOL_PARENT_EMAIL_FOR_LINK";
+const LS_RECENT_SCHOOLS = "PRESCHOOL_RECENT_SCHOOLS";
 
 let APP = {
   schoolCode: null,
@@ -793,6 +810,64 @@ let APP = {
   staffSelectedPendingId: null,
   unsub: []
 };
+
+/* ============================================================
+   Recent Schools Management
+   ============================================================ */
+function getRecentSchools() {
+  try {
+    const stored = localStorage.getItem(LS_RECENT_SCHOOLS);
+    return stored ? JSON.parse(stored) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveRecentSchool(code) {
+  if (!code || !code.trim()) return;
+  const codeUpper = code.trim().toUpperCase();
+  let recent = getRecentSchools();
+  
+  // Remove if already exists, then add to front
+  recent = recent.filter(c => c !== codeUpper);
+  recent.unshift(codeUpper);
+  
+  // Keep only last 5
+  recent = recent.slice(0, 5);
+  
+  try {
+    localStorage.setItem(LS_RECENT_SCHOOLS, JSON.stringify(recent));
+    updateRecentSchoolsUI();
+  } catch (e) {
+    // Ignore localStorage errors
+  }
+}
+
+function updateRecentSchoolsUI() {
+  const recent = getRecentSchools();
+  if (recent.length === 0) {
+    recentSchoolsSection.classList.add("hidden");
+    return;
+  }
+  
+  recentSchoolsSection.classList.remove("hidden");
+  recentSchoolsList.innerHTML = recent.map(code => 
+    `<button type="button" class="recent-school-btn px-3 py-1 rounded-xl bg-white/10 border border-white/15 
+             text-white/80 hover:text-white hover:bg-white/15 transition text-sm"
+             data-school="${escA(code)}">${esc(code)}</button>`
+  ).join("");
+  
+  // Update datalist
+  schoolCodesList.innerHTML = recent.map(code => `<option value="${escA(code)}">`).join("");
+  
+  // Add click handlers
+  [...recentSchoolsList.querySelectorAll(".recent-school-btn")].forEach(btn => {
+    btn.addEventListener("click", () => {
+      staffSchoolCode.value = btn.getAttribute("data-school");
+      staffSchoolCode.focus();
+    });
+  });
+}
 
 /* ============================================================
    Views
@@ -820,6 +895,9 @@ function showStaffAuth() {
   logoutBtn.classList.add("hidden");
   switchSchoolBtn.classList.add("hidden");
   subTitle.textContent = "Staff login";
+  
+  // Update recent schools UI
+  updateRecentSchoolsUI();
 }
 function showParentAuth() {
   rolePickView.classList.add("hidden");
@@ -1799,6 +1877,7 @@ staffCreateBtn.addEventListener("click", async ()=>{
 
     // Set school code from form BEFORE account creation
     setSchoolCode(code);
+    saveRecentSchool(code);
 
     await AUTH.createUserWithEmailAndPassword(email, pass);
     setStatus("Account created. Now login with your credentials.", "ok");
@@ -1818,6 +1897,7 @@ staffLoginBtn.addEventListener("click", async ()=>{
 
     // Set school code from login form BEFORE authentication
     setSchoolCode(code);
+    saveRecentSchool(code);
 
     await AUTH.signInWithEmailAndPassword(email, pass);
   } catch(e){
@@ -1842,6 +1922,13 @@ forgotPasswordBtn.addEventListener("click", async ()=>{
 sendEmailLinkBtn.addEventListener("click", async ()=>{
   try { await sendParentEmailLink(); }
   catch(e){ console.error(e); setStatus(e?.message || "Error", "err"); }
+});
+
+// Auto-focus email when school code is entered
+staffSchoolCode.addEventListener("input", ()=>{
+  if(staffSchoolCode.value.trim() && !staffEmail.value.trim()){
+    staffEmail.focus();
+  }
 });
 
 /* Staff actions */
