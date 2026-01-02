@@ -332,7 +332,7 @@
               <span class="text-xs px-3 py-1 rounded-full bg-fuchsia-400/10 border border-fuchsia-200/20 text-fuchsia-50">Owner only</span>
             </div>
 
-            <!-- Invite staff by email (recommended) -->
+            <!-- Invite staff by email -->
             <div class="mt-4 grid md:grid-cols-3 gap-3">
               <input id="inviteStaffEmail"
                 class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
@@ -350,10 +350,10 @@
             </div>
 
             <div class="mt-3 text-white/60 text-xs">
-              How it works: you enter email → app creates an invite under this school. When that person logs in, they are automatically added to staff.
+              Enter email → app creates an invite under this school. When that person logs in, they are automatically added to staff.
             </div>
 
-            <!-- Manual add by UID (optional) -->
+            <!-- Manual add by UID -->
             <div class="mt-5 grid md:grid-cols-3 gap-3">
               <input id="promoteStaffUid"
                 class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
@@ -758,8 +758,6 @@ let APP = {
   announcements: [],
 
   selectedChildId: null,
-  parentPendingAction: null,
-  staffSelectedPendingId: null,
   unsub: []
 };
 
@@ -801,9 +799,7 @@ function getRecentSchools() {
   try {
     const stored = localStorage.getItem(LS_RECENT_SCHOOLS);
     return stored ? JSON.parse(stored) : [];
-  } catch (e) {
-    return [];
-  }
+  } catch (e) { return []; }
 }
 function saveRecentSchool(code) {
   if (!code || !code.trim()) return;
@@ -812,10 +808,7 @@ function saveRecentSchool(code) {
   recent = recent.filter(c => c !== codeUpper);
   recent.unshift(codeUpper);
   recent = recent.slice(0, 8);
-  try {
-    localStorage.setItem(LS_RECENT_SCHOOLS, JSON.stringify(recent));
-    updateRecentSchoolsUI();
-  } catch (e) {}
+  try { localStorage.setItem(LS_RECENT_SCHOOLS, JSON.stringify(recent)); updateRecentSchoolsUI(); } catch (e) {}
 }
 function updateRecentSchoolsUI() {
   const recent = getRecentSchools();
@@ -895,7 +888,7 @@ function showParent() {
   parentView.classList.remove("hidden");
   logoutBtn.classList.remove("hidden");
   switchSchoolBtn.classList.remove("hidden");
-  mySchoolsBtn.classList.add("hidden"); // parents usually only see their school
+  mySchoolsBtn.classList.add("hidden"); // hide for parent by design
   subTitle.textContent = "Parent";
 }
 
@@ -972,7 +965,7 @@ async function getMyRoleInSchool(){
   const isStaff = !!staffSnap?.exists || isOwner;
   const role = isOwner ? "owner" : (isStaff ? "staff" : null);
 
-  return { isStaff, isOwner, role, meta, staffDoc: staffSnap?.exists ? staffSnap.data(): null };
+  return { isStaff, isOwner, role };
 }
 
 /* ============================================================
@@ -997,7 +990,6 @@ async function createStaffInviteByEmail(){
 }
 
 async function acceptInviteIfAny(){
-  // On sign-in, after schoolCode is set, check if this user has an invite for this school
   if(!APP.schoolCode) return;
   const email = normalizeEmail(AUTH.currentUser?.email);
   if(!email) return;
@@ -1008,7 +1000,6 @@ async function acceptInviteIfAny(){
   const data = inv.data() || {};
   const role = data.role === "owner" ? "owner" : "staff";
 
-  // Add to /schools/{code}/staff/{uid}
   await schoolRef().collection("staff").doc(AUTH.currentUser.uid).set({
     uid: AUTH.currentUser.uid,
     email,
@@ -1018,9 +1009,7 @@ async function acceptInviteIfAny(){
     addedAt: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge:true });
 
-  // Also store user membership index
   await upsertUserMembership(APP.schoolCode, role);
-
   setStatus("Invite accepted. You now have staff access for this school.", "ok");
 }
 
@@ -1127,6 +1116,7 @@ function bindSchoolDataForParent(){
       }, onSnapError)
   );
 
+  // ✅ fixed to sentAtTs (matches sendAnnouncement + orderBy)
   APP.unsub.push(
     sref.collection("announcements")
       .orderBy("sentAtTs", "desc")
@@ -1321,6 +1311,7 @@ function renderLinkDropdowns(){
   linkSummary.textContent = `${(APP.children||[]).length} children • ${(APP.guardians||[]).length} parents • max 2`;
 }
 
+/* ✅ Staff pending shows approve/deny */
 function renderPending(){
   pendingCount.textContent = `${(APP.pending||[]).length} pending`;
   const list = (APP.pending||[]);
@@ -1342,10 +1333,35 @@ function renderPending(){
             <span class="ml-2">${esc(p.guardianEmail||"")}</span>
           </div>
           <div class="mt-1 text-white/60 text-xs">Parent: ${esc(p.requestedAt||"")}</div>
+          ${p.notes ? `<div class="mt-1 text-white/70 text-xs">Note: ${esc(p.notes)}</div>` : ""}
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <button data-approve="${escA(p.id)}"
+            class="text-xs px-3 py-2 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
+            Approve
+          </button>
+          <button data-deny="${escA(p.id)}"
+            class="text-xs px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+            Deny
+          </button>
         </div>
       </div>
     `;
   }).join("");
+
+  [...pendingList.querySelectorAll("button[data-approve]")].forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const pid = btn.getAttribute("data-approve");
+      await staffApprovePending(pid);
+    });
+  });
+  [...pendingList.querySelectorAll("button[data-deny]")].forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const pid = btn.getAttribute("data-deny");
+      await staffDenyPending(pid);
+    });
+  });
 }
 
 function renderLogs(){
@@ -1373,6 +1389,103 @@ function renderLogs(){
       </tr>
     `;
   }).join("");
+}
+
+/* ============================================================
+   Parent request flow (RESTORED)
+   ============================================================ */
+async function parentSubmitRequest(action){
+  if(APP.role !== "parent") return setStatus("Parent only.", "err");
+  const email = normalizeEmail(AUTH.currentUser?.email);
+  if(!email) return setStatus("Missing parent email.", "err");
+  const childId = APP.selectedChildId;
+  if(!childId) return setStatus("Select a child first.", "err");
+
+  const child = APP.children.find(c=>c.id===childId);
+  if(!child) return setStatus("Child not found.", "err");
+
+  const notes = (pNotes.value||"").trim();
+  const sref = schoolRef();
+
+  // Prevent duplicate pending for same child+action+email
+  const existing = await sref.collection("pending")
+    .where("guardianEmail","==", email)
+    .where("childId","==", childId)
+    .where("action","==", action)
+    .limit(1)
+    .get();
+
+  if(!existing.empty) return setStatus("Request already pending for this action.", "info");
+
+  await sref.collection("pending").add({
+    schoolCode: APP.schoolCode,
+    guardianEmail: email,
+    childId,
+    childName: child.name || "",
+    action,                 // "DROP_OFF" | "PICK_UP"
+    notes: notes || "",
+    requestedAt: nowLocal(),
+    requestedAtTs: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  setStatus("Request sent. Waiting for staff approval.", "ok");
+}
+
+/* ============================================================
+   Staff approve/deny pending
+   ============================================================ */
+async function staffApprovePending(pendingId){
+  if(APP.role !== "staff" && APP.role !== "owner") return setStatus("Staff only.", "err");
+
+  const sref = schoolRef();
+  const pRef = sref.collection("pending").doc(pendingId);
+
+  await DB.runTransaction(async (tx)=>{
+    const pSnap = await tx.get(pRef);
+    if(!pSnap.exists) throw new Error("Pending request not found.");
+    const p = pSnap.data();
+
+    const childRef = sref.collection("children").doc(p.childId);
+    const childSnap = await tx.get(childRef);
+    if(!childSnap.exists) throw new Error("Child not found.");
+
+    // Create log
+    const logRef = sref.collection("logs").doc();
+    tx.set(logRef, {
+      date: todayKey(),
+      parentTime: p.requestedAt || "",
+      parentTimeTs: p.requestedAtTs || null,
+      staffTime: nowLocal(),
+      staffTimeTs: firebase.firestore.FieldValue.serverTimestamp(),
+      action: p.action,
+      childId: p.childId,
+      childName: p.childName || "",
+      guardianEmail: p.guardianEmail || "",
+      notes: p.notes || "",
+      staffUid: AUTH.currentUser.uid,
+      staffEmail: normalizeEmail(AUTH.currentUser.email),
+      staffDisplayName: (APP.settings.staffName||"").trim()
+    });
+
+    // Update child status
+    tx.set(childRef, {
+      lastAction: p.action,
+      lastActionAt: nowLocal(),
+      lastUpdatedBy: normalizeEmail(AUTH.currentUser.email)
+    }, { merge:true });
+
+    // Remove pending
+    tx.delete(pRef);
+  });
+
+  setStatus("Approved and logged.", "ok");
+}
+
+async function staffDenyPending(pendingId){
+  if(APP.role !== "staff" && APP.role !== "owner") return setStatus("Staff only.", "err");
+  if(!confirm("Deny and remove this request?")) return;
+  await schoolRef().collection("pending").doc(pendingId).delete();
+  setStatus("Denied.", "info");
 }
 
 /* ============================================================
@@ -1464,7 +1577,7 @@ async function ownerAddStaffByUid(){
 }
 
 /* ============================================================
-   Export + archive + clear (logs only; keep from your prior version)
+   Export + archive + clear
    ============================================================ */
 async function exportAndArchive(kind){
   if(APP.role!=="staff" && APP.role!=="owner") return setStatus("Staff only.", "err");
@@ -1479,6 +1592,7 @@ async function exportAndArchive(kind){
     const rows = APP.logs.slice().reverse().map(r => headers.map(h => csvEscape(
       h==="schoolName" ? (APP.settings.schoolName||"") :
       h==="className" ? (APP.settings.className||"") :
+      h==="staffName" ? (APP.settings.staffName||"") :
       r[h]
     )));
     const csv = [headers.join(","), ...rows.map(r=>r.join(","))].join("\n");
@@ -1530,7 +1644,6 @@ async function exportAndArchive(kind){
     logs: APP.logs.slice().reverse()
   }, { merge:true });
 
-  // clear logs + pending for today
   const batch = DB.batch();
   const pendSnap = await sref.collection("pending").get();
   pendSnap.forEach(d=>batch.delete(d.ref));
@@ -1608,7 +1721,7 @@ async function completeEmailLinkIfPresent(){
 }
 
 /* ============================================================
-   My Schools modal (staff/owner multi-school list)
+   My Schools modal
    ============================================================ */
 function openMySchoolsModal(){
   if(!AUTH.currentUser) return;
@@ -1618,7 +1731,6 @@ function openMySchoolsModal(){
 function closeMySchoolsModal(){
   mySchoolsModal.classList.add("hidden");
 }
-
 async function loadMySchools(){
   mySchoolsList.innerHTML = `<div class="p-4 text-slate-600 text-sm">Loading...</div>`;
   try{
@@ -1648,12 +1760,11 @@ async function loadMySchools(){
     mySchoolsList.innerHTML = `<div class="p-4 text-rose-600 text-sm">${esc(e?.message||"Error")}</div>`;
   }
 }
-
 async function switchToSchool(code){
   stopListeners();
   setSchoolCode(code);
   setStatus(`Switching to school ${code}...`, "info");
-  await routeAfterAuth(); // re-run role routing
+  await routeAfterAuth();
 }
 
 /* ============================================================
@@ -1668,28 +1779,21 @@ function openAnnouncementModal(){
 function closeAnnouncementModal(){
   announcementModal.classList.add("hidden");
 }
-
 async function sendAnnouncement(){
   const subject = announcementSubject.value.trim();
   const message = announcementMessage.value.trim();
-  
-  if(!message) {
-    alert("Please enter a message.");
-    return;
-  }
+  if(!message) return alert("Please enter a message.");
 
   try {
     setStatus("Sending announcement...", "info");
-    
-    const schoolRef = DB.collection("schools").doc(APP.schoolCode);
-    await schoolRef.collection("announcements").add({
+    const sref = schoolRef();
+    await sref.collection("announcements").add({
       subject: subject || "Announcement",
-      message: message,
+      message,
       sentBy: AUTH.currentUser?.email || "Staff",
       sentAt: nowLocal(),
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      sentAtTs: firebase.firestore.FieldValue.serverTimestamp() // ✅ fixed
     });
-    
     closeAnnouncementModal();
     setStatus("Announcement sent successfully!", "ok");
   } catch(e) {
@@ -1699,10 +1803,7 @@ async function sendAnnouncement(){
 }
 
 /* ============================================================
-   Auth routing (key changes)
-   - Allow same email to join multiple schools
-   - Create membership index automatically when staff/owner
-   - Accept invites
+   Auth routing
    ============================================================ */
 async function routeAfterAuth(){
   APP.isOwner = false;
@@ -1721,13 +1822,9 @@ async function routeAfterAuth(){
     return setStatus("Select role and enter school code to continue.", "info");
   }
 
-  // Create school + owner claim if new
   await ensureSchoolExistsAndOwnerClaim();
-
-  // If invited by email, accept invite automatically
   await acceptInviteIfAny();
 
-  // Determine role by staff doc
   const info = await getMyRoleInSchool();
   APP.isOwner = !!info.isOwner;
 
@@ -1736,15 +1833,11 @@ async function routeAfterAuth(){
     showStaff();
     bindSchoolDataForStaff();
     staffRoleLine.textContent = APP.isOwner ? "Role: OWNER" : "Role: STAFF";
-
-    // Store membership index so user can see "My Schools"
     await upsertUserMembership(APP.schoolCode, APP.role);
-
     setStatus(APP.isOwner ? "Owner signed in." : "Staff signed in.", "ok");
     return;
   }
 
-  // Parent
   APP.role = "parent";
   showParent();
   bindSchoolDataForParent();
@@ -1805,57 +1898,34 @@ backToRole2.addEventListener("click", showRolePick);
 
 staffCreateBtn.addEventListener("click", async ()=>{
   try{
-    const rawCode = staffSchoolCode.value||"";
-    const code = rawCode.trim().toUpperCase();
+    const code = (staffSchoolCode.value||"").trim().toUpperCase();
     const email = normalizeEmail(staffEmail.value||"");
     const pass  = (staffPassword.value||"").trim();
-    
-    console.log("Create account attempt:", { rawCode, code, email, passLength: pass.length });
-    
-    if(!code) {
-      console.log("Create validation failed: no school code");
-      const debugInfo = `You entered: "${rawCode}" (length: ${rawCode.length})`;
-      alert(`Please enter a school code.\n${debugInfo}`);
-      return setStatus(`Please enter a school code. ${debugInfo}`, "err");
-    }
+    if(!code) return setStatus("Please enter a school code.", "err");
     if(!email || !pass) return setStatus("Enter email/password.", "err");
 
     setSchoolCode(code);
     saveRecentSchool(code);
 
-    // If email already exists, creation will fail (expected).
-    // That user should use LOGIN instead.
     await AUTH.createUserWithEmailAndPassword(email, pass);
-
     setStatus("Account created. You are now signed in.", "ok");
     await routeAfterAuth();
   } catch(e){
     console.error(e);
-    // Friendly message if account exists
-    const msg = String(e?.message||"Error");
-    if(msg.toLowerCase().includes("email") && msg.toLowerCase().includes("already")){
+    if(String(e?.code||"") === "auth/email-already-in-use"){
       setStatus("This email already has an account. Please click Login instead.", "err");
-    } else {
-      setStatus(e?.message || "Error", "err");
+      return;
     }
+    setStatus(e?.message || "Error", "err");
   }
 });
 
 staffLoginBtn.addEventListener("click", async ()=>{
   try{
-    const rawCode = staffSchoolCode.value||"";
-    const code = rawCode.trim().toUpperCase();
+    const code = (staffSchoolCode.value||"").trim().toUpperCase();
     const email = normalizeEmail(staffEmail.value||"");
     const pass  = (staffPassword.value||"").trim();
-    
-    console.log("Login attempt:", { rawCode, code, email, passLength: pass.length });
-    
-    if(!code) {
-      console.log("Login validation failed: no school code");
-      const debugInfo = `You entered: "${rawCode}" (length: ${rawCode.length})`;
-      alert(`Please enter a school code.\n${debugInfo}`);
-      return setStatus(`Please enter a school code. ${debugInfo}`, "err");
-    }
+    if(!code) return setStatus("Please enter a school code.", "err");
     if(!email || !pass) return setStatus("Enter email/password.", "err");
 
     setSchoolCode(code);
@@ -1899,11 +1969,10 @@ clearTodayBtn.addEventListener("click", clearToday);
 inviteBtn.addEventListener("click", createStaffInviteByEmail);
 promoteBtn.addEventListener("click", ownerAddStaffByUid);
 
-/* Parent actions (request flow removed in this trimmed multi-school build)
-   - You can paste your existing modal + pending request flow back if you want.
-   - The multi-school change does not break it.
-*/
+/* Parent actions */
 clearParentSelectionBtn.addEventListener("click", clearParentSelection);
+dropOffReqBtn.addEventListener("click", ()=>parentSubmitRequest("DROP_OFF"));
+pickUpReqBtn.addEventListener("click", ()=>parentSubmitRequest("PICK_UP"));
 
 /* ============================================================
    Boot
@@ -1911,7 +1980,6 @@ clearParentSelectionBtn.addEventListener("click", clearParentSelection);
 async function boot(){
   updateOfflineUI();
 
-  // If link contains ?school=CODE, set it
   const u = new URL(window.location.href);
   const school = (u.searchParams.get("school") || "").trim().toUpperCase();
   if(school) setSchoolCode(school);
@@ -1921,13 +1989,6 @@ async function boot(){
   catch(e){ console.error(e); setStatus(e?.message || "Error finishing email login", "err"); }
 
   updateRecentSchoolsUI();
-  
-  // Auto-focus email when school code is entered
-  staffSchoolCode.addEventListener("input", ()=>{
-    if(staffSchoolCode.value.trim() && !staffEmail.value) {
-      staffEmail.focus();
-    }
-  });
 }
 boot();
 </script>
