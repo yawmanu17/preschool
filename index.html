@@ -522,6 +522,43 @@
     </div>
   </div>
 
+  <!-- Announcement modal -->
+  <div id="announcementModal" class="hidden fixed inset-0 z-50">
+    <div class="absolute inset-0 bg-black/60"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="w-full max-w-xl rounded-3xl bg-white text-slate-900 shadow-2xl">
+        <div class="p-5 md:p-6">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold">Send Announcement</h3>
+            <button id="announcementCloseBtn" class="px-3 py-2 rounded-xl hover:bg-slate-100">✕</button>
+          </div>
+
+          <div class="mt-4 text-sm text-slate-600">
+            Send a message to all parents at this school.
+          </div>
+
+          <div class="mt-4 space-y-3">
+            <input id="announcementSubject"
+              class="w-full rounded-2xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 px-4 py-3
+                     focus:outline-none focus:ring-2 focus:ring-purple-300"
+              placeholder="Subject (optional)"/>
+
+            <textarea id="announcementMessage"
+              class="w-full rounded-2xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 px-4 py-3
+                     focus:outline-none focus:ring-2 focus:ring-purple-300 resize-none"
+              rows="4"
+              placeholder="Message"></textarea>
+          </div>
+
+          <div class="mt-4 flex gap-2">
+            <button id="announcementSendBtn" class="px-4 py-3 rounded-2xl bg-purple-500 text-white font-semibold hover:bg-purple-600">Send</button>
+            <button id="announcementCancelBtn" class="px-4 py-3 rounded-2xl bg-slate-100 font-semibold hover:bg-slate-200">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <script>
 /* ============================================================
    Firebase init
@@ -695,6 +732,14 @@ const mySchoolsModal = document.getElementById("mySchoolsModal");
 const mySchoolsCloseBtn = document.getElementById("mySchoolsCloseBtn");
 const mySchoolsCancelBtn = document.getElementById("mySchoolsCancelBtn");
 const mySchoolsList = document.getElementById("mySchoolsList");
+
+/* Announcement modal */
+const announcementModal = document.getElementById("announcementModal");
+const announcementCloseBtn = document.getElementById("announcementCloseBtn");
+const announcementCancelBtn = document.getElementById("announcementCancelBtn");
+const announcementSendBtn = document.getElementById("announcementSendBtn");
+const announcementSubject = document.getElementById("announcementSubject");
+const announcementMessage = document.getElementById("announcementMessage");
 
 /* ============================================================
    App state
@@ -1616,6 +1661,48 @@ async function switchToSchool(code){
 }
 
 /* ============================================================
+   Announcement modal
+   ============================================================ */
+function openAnnouncementModal(){
+  announcementModal.classList.remove("hidden");
+  announcementSubject.value = "";
+  announcementMessage.value = "";
+  announcementSubject.focus();
+}
+function closeAnnouncementModal(){
+  announcementModal.classList.add("hidden");
+}
+
+async function sendAnnouncement(){
+  const subject = announcementSubject.value.trim();
+  const message = announcementMessage.value.trim();
+  
+  if(!message) {
+    alert("Please enter a message.");
+    return;
+  }
+
+  try {
+    setStatus("Sending announcement...", "info");
+    
+    const schoolRef = DB.collection("schools").doc(APP.schoolCode);
+    await schoolRef.collection("announcements").add({
+      subject: subject || "Announcement",
+      message: message,
+      sentBy: AUTH.currentUser?.email || "Staff",
+      sentAt: nowLocal(),
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    closeAnnouncementModal();
+    setStatus("Announcement sent successfully!", "ok");
+  } catch(e) {
+    console.error(e);
+    setStatus("Failed to send announcement: " + e.message, "err");
+  }
+}
+
+/* ============================================================
    Auth routing (key changes)
    - Allow same email to join multiple schools
    - Create membership index automatically when staff/owner
@@ -1709,6 +1796,12 @@ mySchoolsCloseBtn.addEventListener("click", closeMySchoolsModal);
 mySchoolsCancelBtn.addEventListener("click", closeMySchoolsModal);
 mySchoolsModal.addEventListener("click", (e)=>{ if(e.target===mySchoolsModal) closeMySchoolsModal(); });
 
+sendAnnouncementBtn.addEventListener("click", openAnnouncementModal);
+announcementCloseBtn.addEventListener("click", closeAnnouncementModal);
+announcementCancelBtn.addEventListener("click", closeAnnouncementModal);
+announcementSendBtn.addEventListener("click", sendAnnouncement);
+announcementModal.addEventListener("click", (e)=>{ if(e.target===announcementModal) closeAnnouncementModal(); });
+
 pickStaffBtn.addEventListener("click", showStaffAuth);
 pickParentBtn.addEventListener("click", showParentAuth);
 backToRole1.addEventListener("click", showRolePick);
@@ -1716,10 +1809,19 @@ backToRole2.addEventListener("click", showRolePick);
 
 staffCreateBtn.addEventListener("click", async ()=>{
   try{
-    const code = (staffSchoolCode.value||"").trim().toUpperCase();
+    const rawCode = staffSchoolCode.value||"";
+    const code = rawCode.trim().toUpperCase();
     const email = normalizeEmail(staffEmail.value||"");
     const pass  = (staffPassword.value||"").trim();
-    if(!code) return setStatus("Enter school code.", "err");
+    
+    console.log("Create account attempt:", { rawCode, code, email, passLength: pass.length });
+    
+    if(!code) {
+      console.log("Create validation failed: no school code");
+      const debugInfo = `You entered: "${rawCode}" (length: ${rawCode.length})`;
+      alert(`Please enter a school code.\n${debugInfo}`);
+      return setStatus(`Please enter a school code. ${debugInfo}`, "err");
+    }
     if(!email || !pass) return setStatus("Enter email/password.", "err");
 
     setSchoolCode(code);
@@ -1745,10 +1847,19 @@ staffCreateBtn.addEventListener("click", async ()=>{
 
 staffLoginBtn.addEventListener("click", async ()=>{
   try{
-    const code = (staffSchoolCode.value||"").trim().toUpperCase();
+    const rawCode = staffSchoolCode.value||"";
+    const code = rawCode.trim().toUpperCase();
     const email = normalizeEmail(staffEmail.value||"");
     const pass  = (staffPassword.value||"").trim();
-    if(!code) return setStatus("Enter school code.", "err");
+    
+    console.log("Login attempt:", { rawCode, code, email, passLength: pass.length });
+    
+    if(!code) {
+      console.log("Login validation failed: no school code");
+      const debugInfo = `You entered: "${rawCode}" (length: ${rawCode.length})`;
+      alert(`Please enter a school code.\n${debugInfo}`);
+      return setStatus(`Please enter a school code. ${debugInfo}`, "err");
+    }
     if(!email || !pass) return setStatus("Enter email/password.", "err");
 
     setSchoolCode(code);
@@ -1814,6 +1925,13 @@ async function boot(){
   catch(e){ console.error(e); setStatus(e?.message || "Error finishing email login", "err"); }
 
   updateRecentSchoolsUI();
+  
+  // Auto-focus email when school code is entered
+  staffSchoolCode.addEventListener("input", ()=>{
+    if(staffSchoolCode.value.trim() && !staffEmail.value) {
+      staffEmail.focus();
+    }
+  });
 }
 boot();
 </script>
