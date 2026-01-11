@@ -18,20 +18,15 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
 
   <style>
-    .bg-grid {
-      background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.12) 1px, transparent 0);
-      background-size: 18px 18px;
-    }
-    select option { color:#0f172a; background:#fff; }
-    ::-webkit-scrollbar { height: 10px; width: 10px; }
-    ::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.35); border-radius: 999px; }
-    ::-webkit-scrollbar-track { background: rgba(241,245,249,0); }
+    .bg-grid{background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,0.12) 1px, transparent 0);background-size:18px 18px}
+    select option{color:#0f172a;background:#fff}
+    ::-webkit-scrollbar{height:10px;width:10px}
+    ::-webkit-scrollbar-thumb{background:rgba(100,116,139,0.35);border-radius:999px}
+    ::-webkit-scrollbar-track{background:rgba(241,245,249,0)}
   </style>
 
   <script>
-    tailwind.config = {
-      theme: { extend: { boxShadow: { card: "0 18px 60px rgba(2,6,23,0.20)" } } }
-    };
+    tailwind.config = { theme:{ extend:{ boxShadow:{ card:"0 18px 60px rgba(2,6,23,0.20)" } } } };
   </script>
 </head>
 
@@ -40,12 +35,9 @@
   <div class="fixed inset-0 -z-10">
     <div class="absolute inset-0 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900"></div>
     <div class="absolute inset-0 opacity-30 bg-grid"></div>
-    <div class="absolute -top-28 -left-28 w-[520px] h-[520px] rounded-full blur-3xl opacity-25
-                bg-gradient-to-br from-cyan-300 via-indigo-400 to-fuchsia-400"></div>
-    <div class="absolute -bottom-40 -right-28 w-[620px] h-[620px] rounded-full blur-3xl opacity-20
-                bg-gradient-to-br from-amber-300 via-rose-300 to-indigo-300"></div>
-    <div class="absolute top-[30%] left-[55%] w-[380px] h-[380px] rounded-full blur-3xl opacity-15
-                bg-gradient-to-br from-emerald-300 via-cyan-300 to-indigo-300"></div>
+    <div class="absolute -top-28 -left-28 w-[520px] h-[520px] rounded-full blur-3xl opacity-25 bg-gradient-to-br from-cyan-300 via-indigo-400 to-fuchsia-400"></div>
+    <div class="absolute -bottom-40 -right-28 w-[620px] h-[620px] rounded-full blur-3xl opacity-20 bg-gradient-to-br from-amber-300 via-rose-300 to-indigo-300"></div>
+    <div class="absolute top-[30%] left-[55%] w-[380px] h-[380px] rounded-full blur-3xl opacity-15 bg-gradient-to-br from-emerald-300 via-cyan-300 to-indigo-300"></div>
   </div>
 
   <!-- Header -->
@@ -65,18 +57,15 @@
         <div class="flex items-center gap-2">
           <span id="schoolBadge" class="hidden sm:inline text-xs px-3 py-1 rounded-full bg-white/10 border border-white/15 text-white/90"></span>
 
-          <button id="mySchoolsBtn"
-            class="hidden px-3 py-1 rounded-xl text-xs font-semibold bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+          <button id="mySchoolsBtn" class="hidden px-3 py-1 rounded-xl text-xs font-semibold bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
             My Schools
           </button>
 
-          <button id="switchSchoolBtn"
-            class="hidden px-3 py-1 rounded-xl text-xs font-semibold bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+          <button id="switchSchoolBtn" class="hidden px-3 py-1 rounded-xl text-xs font-semibold bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
             Switch School
           </button>
 
-          <button id="logoutBtn"
-            class="hidden px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+          <button id="logoutBtn" class="hidden px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
             Logout
           </button>
         </div>
@@ -127,8 +116,7 @@
 
             <div class="mt-4 space-y-3">
               <input id="staffSchoolCode" autocomplete="off" list="schoolCodesList"
-                class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                       focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
+                class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
                 placeholder="School code"/>
 
               <datalist id="schoolCodesList"></datalist>
@@ -142,28 +130,23 @@
               </div>
 
               <input id="staffEmail" type="email" autocomplete="username"
-                class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                       focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
+                class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
                 placeholder="Email"/>
 
               <input id="staffPassword" type="password" autocomplete="current-password"
-                class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                       focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
+                class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
                 placeholder="Password"/>
 
-              <button id="staffLoginBtn"
-                class="w-full px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
+              <button id="staffLoginBtn" class="w-full px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
                 Login
               </button>
 
-              <button id="staffCreateBtn"
-                class="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+              <button id="staffCreateBtn" class="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
                 Create staff account
               </button>
 
               <div class="text-center">
-                <button id="forgotPasswordBtn"
-                  class="text-white/70 hover:text-white text-sm underline transition">
+                <button id="forgotPasswordBtn" class="text-white/70 hover:text-white text-sm underline transition">
                   Forgot password?
                 </button>
               </div>
@@ -172,8 +155,7 @@
                 First staff to sign in to a new school code automatically becomes <b>Owner</b>.
               </div>
 
-              <button id="backToRole1"
-                class="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+              <button id="backToRole1" class="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
                 ← Back
               </button>
             </div>
@@ -190,17 +172,14 @@
 
             <div class="mt-4 space-y-3">
               <input id="parentSchoolCode" autocomplete="off"
-                class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                       focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
+                class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
                 placeholder="School code"/>
 
               <input id="parentEmail" type="email" autocomplete="email"
-                class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                       focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
+                class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
                 placeholder="Email"/>
 
-              <button id="sendEmailLinkBtn"
-                class="w-full px-4 py-3 rounded-2xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition">
+              <button id="sendEmailLinkBtn" class="w-full px-4 py-3 rounded-2xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition">
                 Send login link
               </button>
 
@@ -208,8 +187,7 @@
                 We’ll email a secure sign-in link. Check Spam/Promotions if you don’t see it.
               </div>
 
-              <button id="backToRole2"
-                class="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+              <button id="backToRole2" class="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
                 ← Back
               </button>
             </div>
@@ -257,24 +235,20 @@
 
               <div class="mt-4">
                 <input id="pNotes"
-                  class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                         focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
+                  class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
                   placeholder="Note (optional)"/>
               </div>
 
               <div class="mt-5 grid grid-cols-2 gap-3">
-                <button id="dropOffReqBtn"
-                  class="px-4 py-4 rounded-2xl bg-emerald-500 text-white font-semibold hover:bg-emerald-600 active:scale-[0.99] transition">
+                <button id="dropOffReqBtn" class="px-4 py-4 rounded-2xl bg-emerald-500 text-white font-semibold hover:bg-emerald-600 active:scale-[0.99] transition">
                   ✅ Drop-off
                 </button>
-                <button id="pickUpReqBtn"
-                  class="px-4 py-4 rounded-2xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 active:scale-[0.99] transition">
+                <button id="pickUpReqBtn" class="px-4 py-4 rounded-2xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 active:scale-[0.99] transition">
                   🎒 Pick-up
                 </button>
               </div>
 
-              <button id="clearParentSelectionBtn"
-                class="mt-3 w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+              <button id="clearParentSelectionBtn" class="mt-3 w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
                 Clear
               </button>
 
@@ -306,20 +280,16 @@
             </div>
 
             <div class="flex flex-wrap gap-2">
-              <button id="sendAnnouncementBtn"
-                class="px-4 py-2 rounded-xl bg-purple-500 text-white font-semibold hover:bg-purple-600 transition">
+              <button id="sendAnnouncementBtn" class="px-4 py-2 rounded-xl bg-purple-500 text-white font-semibold hover:bg-purple-600 transition">
                 📢 Send Announcement
               </button>
-              <button id="exportPdfBtn"
-                class="px-4 py-2 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600 transition">
+              <button id="exportPdfBtn" class="px-4 py-2 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600 transition">
                 Export PDF & Clear
               </button>
-              <button id="exportCsvBtn"
-                class="px-4 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+              <button id="exportCsvBtn" class="px-4 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
                 Export CSV & Clear
               </button>
-              <button id="clearTodayBtn"
-                class="px-4 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+              <button id="clearTodayBtn" class="px-4 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
                 Clear today
               </button>
             </div>
@@ -332,39 +302,25 @@
               <span class="text-xs px-3 py-1 rounded-full bg-fuchsia-400/10 border border-fuchsia-200/20 text-fuchsia-50">Owner only</span>
             </div>
 
-            <!-- Invite staff by email (recommended) -->
             <div class="mt-4 grid md:grid-cols-3 gap-3">
-              <input id="inviteStaffEmail"
-                class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                       focus:outline-none focus:ring-2 focus:ring-fuchsia-300/40"
-                placeholder="Staff email (recommended)"/>
-              <select id="inviteStaffRole"
-                class="rounded-2xl border border-white/15 bg-white/10 text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-300/40">
+              <input id="inviteStaffEmail" class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-300/40" placeholder="Staff email"/>
+              <select id="inviteStaffRole" class="rounded-2xl border border-white/15 bg-white/10 text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-300/40">
                 <option value="staff">Staff</option>
                 <option value="owner">Owner (use carefully)</option>
               </select>
-              <button id="inviteBtn"
-                class="px-4 py-3 rounded-2xl bg-fuchsia-500 text-white font-semibold hover:bg-fuchsia-600 transition">
+              <button id="inviteBtn" class="px-4 py-3 rounded-2xl bg-fuchsia-500 text-white font-semibold hover:bg-fuchsia-600 transition">
                 Invite / Add by Email
               </button>
             </div>
 
             <div class="mt-3 text-white/60 text-xs">
-              How it works: you enter email → app creates an invite under this school. When that person logs in, they are automatically added to staff.
+              Enter email → app creates invite. When they login with that email + school code, they are added to staff.
             </div>
 
-            <!-- Manual add by UID (optional) -->
             <div class="mt-5 grid md:grid-cols-3 gap-3">
-              <input id="promoteStaffUid"
-                class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                       focus:outline-none focus:ring-2 focus:ring-fuchsia-300/40"
-                placeholder="Staff UID (optional)"/>
-              <input id="promoteStaffEmail"
-                class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                       focus:outline-none focus:ring-2 focus:ring-fuchsia-300/40"
-                placeholder="Staff email (optional)"/>
-              <button id="promoteBtn"
-                class="px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+              <input id="promoteStaffUid" class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-300/40" placeholder="Staff UID (optional)"/>
+              <input id="promoteStaffEmail" class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-300/40" placeholder="Staff email (optional)"/>
+              <button id="promoteBtn" class="px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
                 Add staff by UID
               </button>
             </div>
@@ -384,21 +340,11 @@
             <div class="lg:col-span-4 rounded-2xl border border-white/10 bg-white/5 p-4">
               <div class="text-white/85 text-sm font-semibold">Header</div>
               <div class="mt-3 space-y-3">
-                <input id="schoolName"
-                  class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                         focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
-                  placeholder="School name"/>
-                <input id="className"
-                  class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                         focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
-                  placeholder="Classroom"/>
-                <input id="staffName"
-                  class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                         focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
-                  placeholder="Staff on duty"/>
+                <input id="schoolName" class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-300/40" placeholder="School name"/>
+                <input id="className" class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-300/40" placeholder="Classroom"/>
+                <input id="staffName" class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-300/40" placeholder="Staff on duty"/>
 
-                <button id="saveSessionBtn"
-                  class="w-full px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
+                <button id="saveSessionBtn" class="w-full px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
                   Save
                 </button>
               </div>
@@ -407,16 +353,9 @@
             <div class="lg:col-span-4 rounded-2xl border border-white/10 bg-white/5 p-4">
               <div class="text-white/85 text-sm font-semibold">Parents</div>
               <div class="mt-3 grid gap-3">
-                <input id="newGuardianName"
-                  class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                         focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
-                  placeholder="Parent name"/>
-                <input id="newGuardianEmail" type="email" autocomplete="email"
-                  class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                         focus:outline-none focus:ring-2 focus:ring-indigo-300/40"
-                  placeholder="Parent email"/>
-                <button id="addGuardianBtn"
-                  class="px-4 py-3 rounded-2xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition">
+                <input id="newGuardianName" class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-300/40" placeholder="Parent name"/>
+                <input id="newGuardianEmail" type="email" autocomplete="email" class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-300/40" placeholder="Parent email"/>
+                <button id="addGuardianBtn" class="px-4 py-3 rounded-2xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition">
                   Add
                 </button>
               </div>
@@ -426,12 +365,8 @@
             <div class="lg:col-span-4 rounded-2xl border border-white/10 bg-white/5 p-4">
               <div class="text-white/85 text-sm font-semibold">Children</div>
               <div class="mt-3 grid gap-3">
-                <input id="newChildName"
-                  class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3
-                         focus:outline-none focus:ring-2 focus:ring-emerald-300/40"
-                  placeholder="Child name"/>
-                <button id="addChildBtn"
-                  class="px-4 py-3 rounded-2xl bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition">
+                <input id="newChildName" class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-300/40" placeholder="Child name"/>
+                <button id="addChildBtn" class="px-4 py-3 rounded-2xl bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition">
                   Add
                 </button>
               </div>
@@ -442,16 +377,13 @@
           <div class="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
             <div class="text-white/85 text-sm font-semibold">Link (max 2 parents)</div>
             <div class="mt-4 grid md:grid-cols-3 gap-3">
-              <select id="linkChildSelect"
-                class="rounded-2xl border border-white/15 bg-white/10 text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-300/40">
+              <select id="linkChildSelect" class="rounded-2xl border border-white/15 bg-white/10 text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-300/40">
                 <option value="">Child</option>
               </select>
-              <select id="linkGuardianSelect"
-                class="rounded-2xl border border-white/15 bg-white/10 text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-300/40">
+              <select id="linkGuardianSelect" class="rounded-2xl border border-white/15 bg-white/10 text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-300/40">
                 <option value="">Parent</option>
               </select>
-              <button id="linkBtn"
-                class="px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
+              <button id="linkBtn" class="px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
                 Link
               </button>
             </div>
@@ -530,20 +462,12 @@
           </div>
 
           <div class="mt-4 text-sm text-slate-600">
-            Send a message to all parents at this school.
+            Send a message to all linked parents at this school.
           </div>
 
           <div class="mt-4 space-y-3">
-            <input id="announcementSubject"
-              class="w-full rounded-2xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 px-4 py-3
-                     focus:outline-none focus:ring-2 focus:ring-purple-300"
-              placeholder="Subject (optional)"/>
-
-            <textarea id="announcementMessage"
-              class="w-full rounded-2xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 px-4 py-3
-                     focus:outline-none focus:ring-2 focus:ring-purple-300 resize-none"
-              rows="4"
-              placeholder="Message"></textarea>
+            <input id="announcementSubject" class="w-full rounded-2xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-300" placeholder="Subject (optional)"/>
+            <textarea id="announcementMessage" class="w-full rounded-2xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-300 resize-none" rows="4" placeholder="Message"></textarea>
           </div>
 
           <div class="mt-4 flex gap-2">
@@ -556,9 +480,7 @@
   </div>
 
 <script>
-/* ============================================================
-   Firebase init
-   ============================================================ */
+/* Firebase init */
 const firebaseConfig = {
   apiKey: "AIzaSyC0vDzgPZllUU_gYU0iIYPiT4OWbj-eYHQ",
   authDomain: "preschool-a9bb0.firebaseapp.com",
@@ -576,9 +498,7 @@ const AUTH = firebase.auth();
 AUTH.useDeviceLanguage();
 const DB   = firebase.firestore();
 
-/* ============================================================
-   Helpers
-   ============================================================ */
+/* Helpers */
 const pad2 = n => String(n).padStart(2,"0");
 const todayKey = () => { const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; };
 const nowLocal = () => { const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`; };
@@ -597,21 +517,14 @@ function setStatus(msg, type="info") {
   statusMsg.className = `${base} ${styles[type] || styles.info}`;
   statusMsg.textContent = msg;
 }
-
-function updateOfflineUI(){
-  offlineBar.classList.toggle("hidden", navigator.onLine);
-}
+function updateOfflineUI(){ offlineBar.classList.toggle("hidden", navigator.onLine); }
 window.addEventListener("online", updateOfflineUI);
 window.addEventListener("offline", updateOfflineUI);
 
-function safeSetInput(el, value){
-  if(document.activeElement === el) return;
-  el.value = value ?? "";
-}
-
+function safeSetInput(el, value){ if(document.activeElement === el) return; el.value = value ?? ""; }
 function guardHosted(){
   if(location.protocol === "file:"){
-    setStatus("This app must be opened from a hosted URL (not file://). Use GitHub Pages / Firebase Hosting / local server.", "err");
+    setStatus("Open from a hosted URL (not file://). Use Firebase Hosting / GitHub Pages / local server.", "err");
     return false;
   }
   return true;
@@ -622,9 +535,7 @@ function continueUrl(paramsObj){
   return u.toString();
 }
 
-/* ============================================================
-   DOM
-   ============================================================ */
+/* DOM */
 const subTitle = document.getElementById("subTitle");
 const logoutBtn = document.getElementById("logoutBtn");
 const switchSchoolBtn = document.getElementById("switchSchoolBtn");
@@ -650,7 +561,7 @@ const backToRole2 = document.getElementById("backToRole2");
 const staffView  = document.getElementById("staffView");
 const parentView = document.getElementById("parentView");
 
-/* Auth - Staff */
+/* Staff Auth */
 const staffSchoolCode = document.getElementById("staffSchoolCode");
 const staffEmail = document.getElementById("staffEmail");
 const staffPassword = document.getElementById("staffPassword");
@@ -662,7 +573,7 @@ const schoolCodesList = document.getElementById("schoolCodesList");
 const recentSchoolsSection = document.getElementById("recentSchoolsSection");
 const recentSchoolsList = document.getElementById("recentSchoolsList");
 
-/* Auth - Parent */
+/* Parent Auth */
 const parentSchoolCode = document.getElementById("parentSchoolCode");
 const parentEmail = document.getElementById("parentEmail");
 const sendEmailLinkBtn = document.getElementById("sendEmailLinkBtn");
@@ -737,17 +648,17 @@ const announcementSendBtn = document.getElementById("announcementSendBtn");
 const announcementSubject = document.getElementById("announcementSubject");
 const announcementMessage = document.getElementById("announcementMessage");
 
-/* ============================================================
-   App state
-   ============================================================ */
+/* State */
 const LS_RECENT_SCHOOLS = "PRESCHOOL_RECENT_SCHOOLS";
 const LS_PARENT_EMAIL = "PRESCHOOL_PARENT_EMAIL_FOR_LINK";
+const LS_AUTH_INTENT = "PRESCHOOL_AUTH_INTENT"; // "staff" | "parent"
 
 let APP = {
   schoolCode: null,
   role: null,              // "owner" | "staff" | "parent"
   user: null,
   isOwner: false,
+  authIntent: null,
 
   settings: { schoolName:"", className:"", staffName:"" },
   guardians: [],
@@ -758,14 +669,20 @@ let APP = {
   announcements: [],
 
   selectedChildId: null,
-  parentPendingAction: null,
-  staffSelectedPendingId: null,
   unsub: []
 };
 
-/* ============================================================
-   Multi-school membership helpers
-   ============================================================ */
+function setAuthIntent(x){
+  APP.authIntent = x || null;
+  try{ localStorage.setItem(LS_AUTH_INTENT, APP.authIntent || ""); }catch(e){}
+}
+function loadAuthIntent(){
+  try{
+    const v = localStorage.getItem(LS_AUTH_INTENT);
+    APP.authIntent = v ? v : null;
+  }catch(e){}
+}
+
 function userRef(){
   const uid = AUTH.currentUser?.uid;
   if(!uid) throw new Error("Not signed in");
@@ -788,34 +705,24 @@ function setSchoolCode(code){
     schoolBadge.classList.add("hidden");
   }
 }
-
 function schoolRef(){
   if(!APP.schoolCode) throw new Error("Missing schoolCode");
   return DB.collection("schools").doc(APP.schoolCode);
 }
 
-/* ============================================================
-   Recent Schools UI
-   ============================================================ */
+/* Recent Schools */
 function getRecentSchools() {
-  try {
-    const stored = localStorage.getItem(LS_RECENT_SCHOOLS);
-    return stored ? JSON.parse(stored) : [];
-  } catch (e) {
-    return [];
-  }
+  try { return JSON.parse(localStorage.getItem(LS_RECENT_SCHOOLS) || "[]"); }
+  catch { return []; }
 }
 function saveRecentSchool(code) {
   if (!code || !code.trim()) return;
   const codeUpper = code.trim().toUpperCase();
-  let recent = getRecentSchools();
-  recent = recent.filter(c => c !== codeUpper);
+  let recent = getRecentSchools().filter(c => c !== codeUpper);
   recent.unshift(codeUpper);
   recent = recent.slice(0, 8);
-  try {
-    localStorage.setItem(LS_RECENT_SCHOOLS, JSON.stringify(recent));
-    updateRecentSchoolsUI();
-  } catch (e) {}
+  try { localStorage.setItem(LS_RECENT_SCHOOLS, JSON.stringify(recent)); } catch {}
+  updateRecentSchoolsUI();
 }
 function updateRecentSchoolsUI() {
   const recent = getRecentSchools();
@@ -839,9 +746,7 @@ function updateRecentSchoolsUI() {
   });
 }
 
-/* ============================================================
-   Views
-   ============================================================ */
+/* Views */
 function showRolePick() {
   rolePickView.classList.remove("hidden");
   staffAuthCard.classList.add("hidden");
@@ -895,54 +800,46 @@ function showParent() {
   parentView.classList.remove("hidden");
   logoutBtn.classList.remove("hidden");
   switchSchoolBtn.classList.remove("hidden");
-  mySchoolsBtn.classList.add("hidden"); // parents usually only see their school
+  mySchoolsBtn.classList.add("hidden");
   subTitle.textContent = "Parent";
 }
-
 function stopListeners(){
   APP.unsub.forEach(fn=>{ try{ fn(); }catch{} });
   APP.unsub = [];
 }
 
-/* ============================================================
-   School creation + membership indexing
-   ============================================================ */
+/* School creation (first staff becomes owner) */
 async function ensureSchoolExistsAndOwnerClaim(){
   const uid = AUTH.currentUser?.uid;
-  if(!uid) return;
+  if(!uid || !APP.schoolCode) return;
 
   const metaRef = schoolRef();
-  console.log("ensureSchoolExistsAndOwnerClaim called for school:", APP.schoolCode, "uid:", uid);
+  const snap = await metaRef.get().catch(()=>null);
+  if(snap && snap.exists) return;
 
-  await DB.runTransaction(async (tx)=>{
-    const snap = await tx.get(metaRef);
-    console.log("School exists:", snap.exists, "data:", snap.exists ? snap.data() : null);
-    if(!snap.exists){
-      console.log("Creating new school with owner:", uid);
-      tx.set(metaRef, {
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        ownerUid: uid,
-        ownerEmail: normalizeEmail(AUTH.currentUser?.email)
-      }, { merge:true });
+  const ownerEmail = normalizeEmail(AUTH.currentUser?.email);
 
-      tx.set(metaRef.collection("settings").doc("main"), {
-        schoolName: "",
-        className: "",
-        staffName: ""
-      }, { merge:true });
-
-      tx.set(metaRef.collection("staff").doc(uid), {
-        uid,
-        email: normalizeEmail(AUTH.currentUser?.email),
-        role: "owner",
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge:true });
-    } else {
-      console.log("School already exists, not creating");
-    }
-  }).catch(err => {
-    console.error("Transaction failed:", err);
+  // 1) create school meta
+  await metaRef.set({
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    ownerUid: uid,
+    ownerEmail: ownerEmail
   });
+
+  // 2) create owner staff doc
+  await metaRef.collection("staff").doc(uid).set({
+    uid,
+    email: ownerEmail,
+    role: "owner",
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge:true });
+
+  // 3) default settings
+  await metaRef.collection("settings").doc("main").set({
+    schoolName: "",
+    className: "",
+    staffName: ""
+  }, { merge:true });
 }
 
 async function upsertUserMembership(schoolCode, role){
@@ -959,16 +856,11 @@ async function upsertUserMembership(schoolCode, role){
   }, { merge:true });
 }
 
-/* ============================================================
-   Role check (staff/owner)
-   ============================================================ */
 async function getMyRoleInSchool(){
   const uid = AUTH.currentUser?.uid;
-  console.log("getMyRoleInSchool called, uid:", uid, "schoolCode:", APP.schoolCode);
   if(!uid) return { isStaff:false, isOwner:false, role:null };
 
   const sref = schoolRef();
-
   const [metaSnap, staffSnap] = await Promise.all([
     sref.get().catch(()=>null),
     sref.collection("staff").doc(uid).get().catch(()=>null)
@@ -976,18 +868,13 @@ async function getMyRoleInSchool(){
 
   const meta = metaSnap?.exists ? metaSnap.data() : null;
   const isOwner = !!meta?.ownerUid && meta.ownerUid === uid;
-  console.log("School meta:", meta, "isOwner:", isOwner);
-
   const isStaff = !!staffSnap?.exists || isOwner;
   const role = isOwner ? "owner" : (isStaff ? "staff" : null);
 
-  console.log("Final result - isStaff:", isStaff, "isOwner:", isOwner, "role:", role);
   return { isStaff, isOwner, role, meta, staffDoc: staffSnap?.exists ? staffSnap.data(): null };
 }
 
-/* ============================================================
-   Invite flow (owner adds staff by email)
-   ============================================================ */
+/* Invite flow */
 async function createStaffInviteByEmail(){
   if(!APP.isOwner) return setStatus("Owner only.", "err");
   const email = normalizeEmail(inviteStaffEmail.value||"");
@@ -1007,18 +894,17 @@ async function createStaffInviteByEmail(){
 }
 
 async function acceptInviteIfAny(){
-  // On sign-in, after schoolCode is set, check if this user has an invite for this school
   if(!APP.schoolCode) return;
   const email = normalizeEmail(AUTH.currentUser?.email);
   if(!email) return;
 
-  const inv = await schoolRef().collection("staffInvites").doc(email).get().catch(()=>null);
+  const invRef = schoolRef().collection("staffInvites").doc(email);
+  const inv = await invRef.get().catch(()=>null);
   if(!inv?.exists) return;
 
   const data = inv.data() || {};
   const role = data.role === "owner" ? "owner" : "staff";
 
-  // Add to /schools/{code}/staff/{uid}
   await schoolRef().collection("staff").doc(AUTH.currentUser.uid).set({
     uid: AUTH.currentUser.uid,
     email,
@@ -1028,15 +914,11 @@ async function acceptInviteIfAny(){
     addedAt: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge:true });
 
-  // Also store user membership index
   await upsertUserMembership(APP.schoolCode, role);
-
   setStatus("Invite accepted. You now have staff access for this school.", "ok");
 }
 
-/* ============================================================
-   Firestore sync
-   ============================================================ */
+/* Firestore sync */
 function onSnapError(err){
   console.error(err);
   const msg = String(err?.message||"Error");
@@ -1088,17 +970,15 @@ function bindSchoolDataForStaff(){
   );
 
   APP.unsub.push(
-    sref.collection("pending").onSnapshot((snap)=>{
-      APP.pending = snap.docs.map(d=>({ id:d.id, ...d.data() }))
-        .sort((a,b)=> (b.requestedAtTs?.toMillis?.()||0) - (a.requestedAtTs?.toMillis?.()||0) );
+    sref.collection("pending").orderBy("requestedAtTs","desc").onSnapshot((snap)=>{
+      APP.pending = snap.docs.map(d=>({ id:d.id, ...d.data() }));
       renderPending();
     }, onSnapError)
   );
 
   APP.unsub.push(
-    sref.collection("logs").where("date","==", todayKey()).onSnapshot((snap)=>{
-      APP.logs = snap.docs.map(d=>({ id:d.id, ...d.data() }))
-        .sort((a,b)=> (b.staffTimeTs?.toMillis?.()||0) - (a.staffTimeTs?.toMillis?.()||0) );
+    sref.collection("logs").where("date","==", todayKey()).orderBy("staffTimeTs","desc").onSnapshot((snap)=>{
+      APP.logs = snap.docs.map(d=>({ id:d.id, ...d.data() }));
       renderLogs();
     }, onSnapError)
   );
@@ -1118,39 +998,29 @@ function bindSchoolDataForParent(){
   );
 
   APP.unsub.push(
-    sref.collection("children")
-      .where("guardianEmails","array-contains", email)
-      .onSnapshot((snap)=>{
-        APP.children = snap.docs.map(d=>({ id:d.id, ...d.data() }))
-          .sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
-        renderParentKids();
-      }, onSnapError)
+    sref.collection("children").where("guardianEmails","array-contains", email).onSnapshot((snap)=>{
+      APP.children = snap.docs.map(d=>({ id:d.id, ...d.data() }))
+        .sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
+      renderParentKids();
+    }, onSnapError)
   );
 
   APP.unsub.push(
-    sref.collection("pending")
-      .where("guardianEmail","==", email)
-      .onSnapshot((snap)=>{
-        APP.pending = snap.docs.map(d=>({ id:d.id, ...d.data() }))
-          .sort((a,b)=> (b.requestedAtTs?.toMillis?.()||0) - (a.requestedAtTs?.toMillis?.()||0) );
-        renderParentPending();
-      }, onSnapError)
+    sref.collection("pending").where("guardianEmail","==", email).orderBy("requestedAtTs","desc").onSnapshot((snap)=>{
+      APP.pending = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+      renderParentPending();
+    }, onSnapError)
   );
 
   APP.unsub.push(
-    sref.collection("announcements")
-      .orderBy("sentAtTs", "desc")
-      .limit(10)
-      .onSnapshot((snap)=>{
-        APP.announcements = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-        renderParentAnnouncements();
-      }, onSnapError)
+    sref.collection("announcements").orderBy("sentAtTs", "desc").limit(10).onSnapshot((snap)=>{
+      APP.announcements = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+      renderParentAnnouncements();
+    }, onSnapError)
   );
 }
 
-/* ============================================================
-   Render
-   ============================================================ */
+/* Render */
 function renderParentHeader(){
   const parts = [APP.settings.schoolName, APP.settings.className].filter(Boolean);
   parentHeaderInfo.textContent = parts.join(" • ");
@@ -1162,6 +1032,7 @@ function clearParentSelection(){
   pSelectedStatus.textContent = "";
   pNotes.value = "";
 }
+
 function renderParentKids(){
   const kids = (APP.children||[]);
   if(!kids.length){
@@ -1195,6 +1066,7 @@ function renderParentKids(){
     });
   });
 }
+
 function renderParentPending(){
   const list = (APP.pending||[]).slice(0,8);
   parentPendingList.innerHTML = list.length
@@ -1209,21 +1081,18 @@ function renderParentAnnouncements(){
   }
   parentAnnouncementsList.innerHTML = announcements.map(a=>`
     <div class="mb-3 pb-3 border-b border-white/10 last:border-b-0 last:pb-0 last:mb-0">
-      <div class="text-white font-semibold text-sm">${esc(a.subject)}</div>
-      <div class="text-white/80 text-xs mt-1">${esc(a.message)}</div>
-      <div class="text-white/50 text-xs mt-1">From: ${esc(a.sentBy)} • ${esc(a.sentAt)}</div>
+      <div class="text-white font-semibold text-sm">${esc(a.subject||"Announcement")}</div>
+      <div class="text-white/80 text-xs mt-1">${esc(a.message||"")}</div>
+      <div class="text-white/50 text-xs mt-1">From: ${esc(a.sentBy||"")} • ${esc(a.sentAt||"")}</div>
     </div>
   `).join("");
 }
 
 function renderStaffRoster(){
-  console.log("renderStaffRoster called, APP.isOwner:", APP.isOwner);
   if(!APP.isOwner){
-    console.log("Not owner, hiding owner panel");
     ownerPanel.classList.add("hidden");
     return;
   }
-  console.log("Is owner, showing owner panel");
   ownerPanel.classList.remove("hidden");
   myUidBox.textContent = AUTH.currentUser?.uid || "-";
 
@@ -1242,8 +1111,7 @@ function renderStaffRoster(){
           <div class="text-white/60 text-xs">${isOwner ? "Owner" : "Staff"}</div>
         </div>
         ${isOwner ? "" : `
-          <button data-demote="${escA(s.uid||s.id)}"
-            class="text-xs px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+          <button data-demote="${escA(s.uid||s.id)}" class="text-xs px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
             Remove
           </button>
         `}
@@ -1273,8 +1141,7 @@ function renderGuardianList(){
         <div class="text-white font-semibold">${esc(g.name||"")}</div>
         <div class="text-white/60 text-xs">${esc(g.email||"")}</div>
       </div>
-      <button data-delg="${escA(g.id)}"
-        class="text-xs px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+      <button data-delg="${escA(g.id)}" class="text-xs px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
         Remove
       </button>
     </div>
@@ -1306,8 +1173,7 @@ function renderChildAdminList(){
             ${emails.length ? emails.map(e=>`• ${esc(e)}`).join("<br/>") : "No linked parents"}
           </div>
         </div>
-        <button data-delc="${escA(c.id)}"
-          class="text-xs px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+        <button data-delc="${escA(c.id)}" class="text-xs px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
           Remove
         </button>
       </div>
@@ -1355,10 +1221,22 @@ function renderPending(){
             <span class="ml-2">${esc(p.guardianEmail||"")}</span>
           </div>
           <div class="mt-1 text-white/60 text-xs">Parent: ${esc(p.requestedAt||"")}</div>
+          ${p.notes ? `<div class="mt-1 text-white/70 text-xs">Note: ${esc(p.notes)}</div>` : ""}
+        </div>
+        <div class="flex flex-col gap-2">
+          <button data-approve="${escA(p.id)}" class="text-xs px-3 py-2 rounded-xl bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition">Approve</button>
+          <button data-reject="${escA(p.id)}" class="text-xs px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">Reject</button>
         </div>
       </div>
     `;
   }).join("");
+
+  [...pendingList.querySelectorAll("button[data-approve]")].forEach(btn=>{
+    btn.addEventListener("click", ()=>approvePending(btn.getAttribute("data-approve")));
+  });
+  [...pendingList.querySelectorAll("button[data-reject]")].forEach(btn=>{
+    btn.addEventListener("click", ()=>rejectPending(btn.getAttribute("data-reject")));
+  });
 }
 
 function renderLogs(){
@@ -1388,9 +1266,7 @@ function renderLogs(){
   }).join("");
 }
 
-/* ============================================================
-   Staff CRUD + linking
-   ============================================================ */
+/* Staff CRUD + linking */
 async function saveSettings(){
   await schoolRef().collection("settings").doc("main").set({
     schoolName: (schoolName.value||"").trim(),
@@ -1453,10 +1329,18 @@ async function linkParentToChild(){
 
   emails.push(g.email);
   await cRef.set({ guardianEmails: emails }, { merge:true });
+
+  // parent access index (for announcements/settings read)
+  await schoolRef().collection("parentAccess").doc(normalizeEmail(g.email)).set({
+    email: normalizeEmail(g.email),
+    addedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    addedBy: AUTH.currentUser.uid
+  }, { merge:true });
+
   setStatus("Linked.", "ok");
 }
 
-/* Owner: add staff by UID (manual fallback) */
+/* Owner: add staff by UID */
 async function ownerAddStaffByUid(){
   if(!APP.isOwner) return setStatus("Owner only.", "err");
   const uid = (promoteStaffUid.value||"").trim();
@@ -1476,9 +1360,85 @@ async function ownerAddStaffByUid(){
   setStatus("Staff added.", "ok");
 }
 
-/* ============================================================
-   Export + archive + clear (logs only; keep from your prior version)
-   ============================================================ */
+/* Parent creates pending */
+async function createPending(action){
+  if(APP.role !== "parent") return;
+  const email = normalizeEmail(AUTH.currentUser?.email);
+  if(!email) return setStatus("Missing email.", "err");
+  if(!APP.selectedChildId) return setStatus("Select a child first.", "err");
+
+  const child = APP.children.find(c=>c.id===APP.selectedChildId);
+  if(!child) return setStatus("Child not found.", "err");
+
+  const note = (pNotes.value||"").trim();
+
+  await schoolRef().collection("pending").add({
+    schoolCode: APP.schoolCode,
+    action,
+    childId: child.id,
+    childName: child.name || "",
+    guardianEmail: email,
+    notes: note,
+    requestedAt: nowLocal(),
+    requestedAtTs: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  setStatus("Request sent.", "ok");
+  pNotes.value = "";
+}
+
+/* Staff approves/rejects pending */
+async function approvePending(pendingId){
+  if(APP.role!=="staff" && APP.role!=="owner") return;
+  const sref = schoolRef();
+  const now = nowLocal();
+  const date = todayKey();
+
+  await DB.runTransaction(async (tx)=>{
+    const pref = sref.collection("pending").doc(pendingId);
+    const psnap = await tx.get(pref);
+    if(!psnap.exists) return;
+
+    const p = psnap.data();
+    const childRef = sref.collection("children").doc(p.childId);
+    const logRef = sref.collection("logs").doc();
+
+    tx.set(logRef, {
+      date,
+      parentTime: p.requestedAt || "",
+      parentTimeTs: p.requestedAtTs || null,
+      staffTime: now,
+      staffTimeTs: firebase.firestore.FieldValue.serverTimestamp(),
+      action: p.action,
+      childId: p.childId,
+      childName: p.childName || "",
+      guardianEmail: p.guardianEmail || "",
+      notes: p.notes || "",
+      staffName: (APP.settings.staffName||"").trim(),
+      approvedByUid: AUTH.currentUser.uid,
+      approvedByEmail: normalizeEmail(AUTH.currentUser.email)
+    });
+
+    tx.set(childRef, {
+      lastAction: p.action,
+      lastActionAt: now,
+      lastUpdatedBy: normalizeEmail(AUTH.currentUser.email)
+    }, { merge:true });
+
+    tx.delete(pref);
+  });
+
+  setStatus("Approved.", "ok");
+}
+
+async function rejectPending(pendingId){
+  if(APP.role!=="staff" && APP.role!=="owner") return;
+  if(!confirm("Reject this request?")) return;
+  await schoolRef().collection("pending").doc(pendingId).delete();
+  setStatus("Rejected.", "info");
+}
+
+/* Export + archive + clear */
 async function exportAndArchive(kind){
   if(APP.role!=="staff" && APP.role!=="owner") return setStatus("Staff only.", "err");
   if(!APP.logs.length) return setStatus("No logs.", "err");
@@ -1492,6 +1452,7 @@ async function exportAndArchive(kind){
     const rows = APP.logs.slice().reverse().map(r => headers.map(h => csvEscape(
       h==="schoolName" ? (APP.settings.schoolName||"") :
       h==="className" ? (APP.settings.className||"") :
+      h==="staffName" ? (APP.settings.staffName||r.staffName||"") :
       r[h]
     )));
     const csv = [headers.join(","), ...rows.map(r=>r.join(","))].join("\n");
@@ -1512,6 +1473,7 @@ async function exportAndArchive(kind){
 
     doc.setFont("helvetica","normal"); doc.setFontSize(11);
     y+=20; doc.text(`Date: ${date}    Class: ${APP.settings.className || ""}`, margin, y);
+    y+=16; doc.text(`Staff: ${APP.settings.staffName || ""}`, margin, y);
     y+=16; doc.text(`Generated: ${nowLocal()}`, margin, y);
     y+=18;
 
@@ -1543,7 +1505,6 @@ async function exportAndArchive(kind){
     logs: APP.logs.slice().reverse()
   }, { merge:true });
 
-  // clear logs + pending for today
   const batch = DB.batch();
   const pendSnap = await sref.collection("pending").get();
   pendSnap.forEach(d=>batch.delete(d.ref));
@@ -1570,9 +1531,7 @@ async function clearToday(){
   setStatus("Cleared.", "ok");
 }
 
-/* ============================================================
-   Email Link Auth (Parent)
-   ============================================================ */
+/* Email Link Auth (Parent) */
 async function sendParentEmailLink(){
   if(!guardHosted()) return;
 
@@ -1581,6 +1540,7 @@ async function sendParentEmailLink(){
   if(!code) return setStatus("Enter school code.", "err");
   if(!email || !email.includes("@")) return setStatus("Enter valid email.", "err");
 
+  setAuthIntent("parent");
   setSchoolCode(code);
 
   const url = continueUrl({ school: code, mode: "parent" });
@@ -1604,6 +1564,7 @@ async function sendParentEmailLink(){
 async function completeEmailLinkIfPresent(){
   if(!AUTH.isSignInWithEmailLink(window.location.href)) return;
 
+  setAuthIntent("parent");
   emailLinkHint.classList.remove("hidden");
   const u = new URL(window.location.href);
   const school = (u.searchParams.get("school") || "").trim().toUpperCase();
@@ -1620,17 +1581,13 @@ async function completeEmailLinkIfPresent(){
   window.history.replaceState({}, document.title, clean);
 }
 
-/* ============================================================
-   My Schools modal (staff/owner multi-school list)
-   ============================================================ */
+/* My Schools modal */
 function openMySchoolsModal(){
   if(!AUTH.currentUser) return;
   mySchoolsModal.classList.remove("hidden");
   loadMySchools();
 }
-function closeMySchoolsModal(){
-  mySchoolsModal.classList.add("hidden");
-}
+function closeMySchoolsModal(){ mySchoolsModal.classList.add("hidden"); }
 
 async function loadMySchools(){
   mySchoolsList.innerHTML = `<div class="p-4 text-slate-600 text-sm">Loading...</div>`;
@@ -1642,8 +1599,7 @@ async function loadMySchools(){
       return;
     }
     mySchoolsList.innerHTML = items.map(m=>`
-      <button class="w-full text-left p-4 border-b last:border-b-0 hover:bg-slate-100 transition"
-              data-school="${escA(m.schoolCode)}">
+      <button class="w-full text-left p-4 border-b last:border-b-0 hover:bg-slate-100 transition" data-school="${escA(m.schoolCode)}">
         <div class="font-semibold text-slate-900">${esc(m.schoolCode)}</div>
         <div class="text-xs text-slate-600">Role: ${esc(m.role||"member")}</div>
       </button>
@@ -1661,62 +1617,45 @@ async function loadMySchools(){
     mySchoolsList.innerHTML = `<div class="p-4 text-rose-600 text-sm">${esc(e?.message||"Error")}</div>`;
   }
 }
-
 async function switchToSchool(code){
   stopListeners();
   setSchoolCode(code);
   setStatus(`Switching to school ${code}...`, "info");
-  await routeAfterAuth(); // re-run role routing
+  await routeAfterAuth();
 }
 
-/* ============================================================
-   Announcement modal
-   ============================================================ */
+/* Announcements */
 function openAnnouncementModal(){
   announcementModal.classList.remove("hidden");
   announcementSubject.value = "";
   announcementMessage.value = "";
   announcementSubject.focus();
 }
-function closeAnnouncementModal(){
-  announcementModal.classList.add("hidden");
-}
+function closeAnnouncementModal(){ announcementModal.classList.add("hidden"); }
 
 async function sendAnnouncement(){
   const subject = announcementSubject.value.trim();
   const message = announcementMessage.value.trim();
-  
-  if(!message) {
-    alert("Please enter a message.");
-    return;
-  }
+  if(!message) return alert("Please enter a message.");
 
-  try {
+  try{
     setStatus("Sending announcement...", "info");
-    
-    const schoolRef = DB.collection("schools").doc(APP.schoolCode);
-    await schoolRef.collection("announcements").add({
+    await schoolRef().collection("announcements").add({
       subject: subject || "Announcement",
-      message: message,
-      sentBy: AUTH.currentUser?.email || "Staff",
+      message,
+      sentBy: normalizeEmail(AUTH.currentUser?.email) || "staff",
       sentAt: nowLocal(),
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      sentAtTs: firebase.firestore.FieldValue.serverTimestamp()
     });
-    
     closeAnnouncementModal();
-    setStatus("Announcement sent successfully!", "ok");
-  } catch(e) {
+    setStatus("Announcement sent!", "ok");
+  }catch(e){
     console.error(e);
-    setStatus("Failed to send announcement: " + e.message, "err");
+    setStatus("Failed: " + (e?.message||"Error"), "err");
   }
 }
 
-/* ============================================================
-   Auth routing (key changes)
-   - Allow same email to join multiple schools
-   - Create membership index automatically when staff/owner
-   - Accept invites
-   ============================================================ */
+/* Auth routing */
 async function routeAfterAuth(){
   APP.isOwner = false;
   staffRoleLine.textContent = "";
@@ -1734,31 +1673,33 @@ async function routeAfterAuth(){
     return setStatus("Select role and enter school code to continue.", "info");
   }
 
-  // Create school + owner claim if new
-  await ensureSchoolExistsAndOwnerClaim();
+  // If staff intent, attempt first-claim + invite accept; do NOT fall back to parent
+  if(APP.authIntent === "staff"){
+    await ensureSchoolExistsAndOwnerClaim();
+    await acceptInviteIfAny();
 
-  // If invited by email, accept invite automatically
-  await acceptInviteIfAny();
+    const info = await getMyRoleInSchool();
+    APP.isOwner = !!info.isOwner;
 
-  // Determine role by staff doc
-  const info = await getMyRoleInSchool();
-  APP.isOwner = !!info.isOwner;
-  console.log("routeAfterAuth - info:", info, "APP.isOwner set to:", APP.isOwner);
+    if(info.isStaff){
+      APP.role = APP.isOwner ? "owner" : "staff";
+      showStaff();
+      bindSchoolDataForStaff();
+      staffRoleLine.textContent = APP.isOwner ? "Role: OWNER" : "Role: STAFF";
+      await upsertUserMembership(APP.schoolCode, APP.role);
+      setStatus(APP.isOwner ? "Owner signed in." : "Staff signed in.", "ok");
+      return;
+    }
 
-  if(info.isStaff){
-    APP.role = APP.isOwner ? "owner" : "staff";
-    showStaff();
-    bindSchoolDataForStaff();
-    staffRoleLine.textContent = APP.isOwner ? "Role: OWNER" : "Role: STAFF";
-
-    // Store membership index so user can see "My Schools"
-    await upsertUserMembership(APP.schoolCode, APP.role);
-
-    setStatus(APP.isOwner ? "Owner signed in." : "Staff signed in.", "ok");
+    // Not staff: keep them on staff flow
+    APP.role = null;
+    stopListeners();
+    showStaffAuth();
+    setStatus("No staff access for this school. Ask the school Owner to invite your email.", "err");
     return;
   }
 
-  // Parent
+  // Parent intent
   APP.role = "parent";
   showParent();
   bindSchoolDataForParent();
@@ -1775,20 +1716,19 @@ AUTH.onAuthStateChanged(async (user)=>{
       return;
     }
     await routeAfterAuth();
-  } catch(e){
+  }catch(e){
     console.error(e);
     setStatus(e?.message || "Auth routing error", "err");
   }
 });
 
-/* ============================================================
-   Events
-   ============================================================ */
+/* Events */
 logoutBtn.addEventListener("click", async ()=>{
   stopListeners();
   await AUTH.signOut();
   setStatus("Logged out.", "info");
   setSchoolCode(null);
+  setAuthIntent(null);
   showRolePick();
 });
 
@@ -1812,64 +1752,46 @@ announcementCancelBtn.addEventListener("click", closeAnnouncementModal);
 announcementSendBtn.addEventListener("click", sendAnnouncement);
 announcementModal.addEventListener("click", (e)=>{ if(e.target===announcementModal) closeAnnouncementModal(); });
 
-pickStaffBtn.addEventListener("click", showStaffAuth);
-pickParentBtn.addEventListener("click", showParentAuth);
-backToRole1.addEventListener("click", showRolePick);
-backToRole2.addEventListener("click", showRolePick);
+pickStaffBtn.addEventListener("click", ()=>{ setAuthIntent("staff"); showStaffAuth(); });
+pickParentBtn.addEventListener("click", ()=>{ setAuthIntent("parent"); showParentAuth(); });
+backToRole1.addEventListener("click", ()=>{ showRolePick(); });
+backToRole2.addEventListener("click", ()=>{ showRolePick(); });
 
 staffCreateBtn.addEventListener("click", async ()=>{
   try{
-    const rawCode = staffSchoolCode.value||"";
-    const code = rawCode.trim().toUpperCase();
+    setAuthIntent("staff");
+    const code = (staffSchoolCode.value||"").trim().toUpperCase();
     const email = normalizeEmail(staffEmail.value||"");
     const pass  = (staffPassword.value||"").trim();
-    
-    console.log("Create account attempt:", { rawCode, code, email, passLength: pass.length });
-    
-    if(!code) {
-      console.log("Create validation failed: no school code");
-      const debugInfo = `You entered: "${rawCode}" (length: ${rawCode.length})`;
-      alert(`Please enter a school code.\n${debugInfo}`);
-      return setStatus(`Please enter a school code. ${debugInfo}`, "err");
-    }
+
+    if(!code) return setStatus("Please enter a school code.", "err");
     if(!email || !pass) return setStatus("Enter email/password.", "err");
 
     setSchoolCode(code);
     saveRecentSchool(code);
 
-    // If email already exists, creation will fail (expected).
-    // That user should use LOGIN instead.
     await AUTH.createUserWithEmailAndPassword(email, pass);
-
     setStatus("Account created. You are now signed in.", "ok");
     await routeAfterAuth();
-  } catch(e){
+  }catch(e){
     console.error(e);
-    // Friendly message if account exists
     const msg = String(e?.message||"Error");
-    if(msg.toLowerCase().includes("email") && msg.toLowerCase().includes("already")){
+    if(msg.toLowerCase().includes("already")){
       setStatus("This email already has an account. Please click Login instead.", "err");
-    } else {
-      setStatus(e?.message || "Error", "err");
+    }else{
+      setStatus(msg, "err");
     }
   }
 });
 
 staffLoginBtn.addEventListener("click", async ()=>{
   try{
-    const rawCode = staffSchoolCode.value||"";
-    const code = rawCode.trim().toUpperCase();
+    setAuthIntent("staff");
+    const code = (staffSchoolCode.value||"").trim().toUpperCase();
     const email = normalizeEmail(staffEmail.value||"");
     const pass  = (staffPassword.value||"").trim();
-    
-    console.log("Login attempt:", { rawCode, code, email, passLength: pass.length });
-    
-    if(!code) {
-      console.log("Login validation failed: no school code");
-      const debugInfo = `You entered: "${rawCode}" (length: ${rawCode.length})`;
-      alert(`Please enter a school code.\n${debugInfo}`);
-      return setStatus(`Please enter a school code. ${debugInfo}`, "err");
-    }
+
+    if(!code) return setStatus("Please enter a school code.", "err");
     if(!email || !pass) return setStatus("Enter email/password.", "err");
 
     setSchoolCode(code);
@@ -1877,7 +1799,7 @@ staffLoginBtn.addEventListener("click", async ()=>{
 
     await AUTH.signInWithEmailAndPassword(email, pass);
     await routeAfterAuth();
-  } catch(e){
+  }catch(e){
     console.error(e);
     setStatus(e?.message || "Error", "err");
   }
@@ -1889,14 +1811,14 @@ forgotPasswordBtn.addEventListener("click", async ()=>{
     if(!email || !email.includes("@")) return setStatus("Enter a valid email address first.", "err");
     await AUTH.sendPasswordResetEmail(email);
     setStatus("Password reset email sent. Check your inbox.", "ok");
-  } catch(e){
+  }catch(e){
     console.error(e);
     setStatus(e?.message || "Error sending reset email", "err");
   }
 });
 
 sendEmailLinkBtn.addEventListener("click", async ()=>{
-  try { await sendParentEmailLink(); }
+  try { setAuthIntent("parent"); await sendParentEmailLink(); }
   catch(e){ console.error(e); setStatus(e?.message || "Error", "err"); }
 });
 
@@ -1913,35 +1835,27 @@ clearTodayBtn.addEventListener("click", clearToday);
 inviteBtn.addEventListener("click", createStaffInviteByEmail);
 promoteBtn.addEventListener("click", ownerAddStaffByUid);
 
-/* Parent actions (request flow removed in this trimmed multi-school build)
-   - You can paste your existing modal + pending request flow back if you want.
-   - The multi-school change does not break it.
-*/
+/* Parent actions */
 clearParentSelectionBtn.addEventListener("click", clearParentSelection);
+dropOffReqBtn.addEventListener("click", ()=>createPending("DROP_OFF"));
+pickUpReqBtn.addEventListener("click", ()=>createPending("PICK_UP"));
 
-/* ============================================================
-   Boot
-   ============================================================ */
+/* Boot */
 async function boot(){
   updateOfflineUI();
+  loadAuthIntent();
 
-  // If link contains ?school=CODE, set it
   const u = new URL(window.location.href);
   const school = (u.searchParams.get("school") || "").trim().toUpperCase();
+  const mode = (u.searchParams.get("mode") || "").trim().toLowerCase();
   if(school) setSchoolCode(school);
+  if(mode === "parent") setAuthIntent("parent");
 
   showRolePick();
   try { await completeEmailLinkIfPresent(); }
   catch(e){ console.error(e); setStatus(e?.message || "Error finishing email login", "err"); }
 
   updateRecentSchoolsUI();
-  
-  // Auto-focus email when school code is entered
-  staffSchoolCode.addEventListener("input", ()=>{
-    if(staffSchoolCode.value.trim() && !staffEmail.value) {
-      staffEmail.focus();
-    }
-  });
 }
 boot();
 </script>
