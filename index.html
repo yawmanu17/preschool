@@ -111,7 +111,7 @@
           <div class="p-6">
             <div class="flex items-center justify-between">
               <h2 class="text-white font-semibold text-lg">Staff</h2>
-              <span class="text-xs px-3 py-1 rounded-full bg-cyan-400/10 border border-cyan-200/20 text-cyan-50">Email + Password</span>
+              <span class="text-xs px-3 py-1 rounded-full bg-cyan-400/10 border border-cyan-200/20 text-cyan-50">Email Link OR Password</span>
             </div>
 
             <div class="mt-4 space-y-3">
@@ -133,22 +133,38 @@
                 class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
                 placeholder="Email"/>
 
-              <input id="staffPassword" type="password" autocomplete="current-password"
-                class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
-                placeholder="Password"/>
+              <!-- Password login (optional) -->
+              <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div class="text-white/80 text-xs font-semibold mb-3">Option A: Email + Password</div>
+                <input id="staffPassword" type="password" autocomplete="current-password"
+                  class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-300/40"
+                  placeholder="Password"/>
 
-              <button id="staffLoginBtn" class="w-full px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
-                Login
-              </button>
+                <div class="mt-3 grid grid-cols-2 gap-3">
+                  <button id="staffLoginBtn" class="px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition">
+                    Login
+                  </button>
+                  <button id="staffCreateBtn" class="px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
+                    Create account
+                  </button>
+                </div>
 
-              <button id="staffCreateBtn" class="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/15 transition">
-                Create staff account
-              </button>
+                <div class="mt-2 text-center">
+                  <button id="forgotPasswordBtn" class="text-white/70 hover:text-white text-sm underline transition">
+                    Forgot password?
+                  </button>
+                </div>
+              </div>
 
-              <div class="text-center">
-                <button id="forgotPasswordBtn" class="text-white/70 hover:text-white text-sm underline transition">
-                  Forgot password?
+              <!-- Email link login (recommended) -->
+              <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div class="text-white/80 text-xs font-semibold mb-2">Option B (Recommended): Passwordless Email Link</div>
+                <button id="sendStaffEmailLinkBtn" class="w-full px-4 py-3 rounded-2xl bg-cyan-500 text-white font-semibold hover:bg-cyan-600 transition">
+                  Send staff login link
                 </button>
+                <div class="text-white/60 text-xs mt-2">
+                  Works even if they were only invited (no password needed). Check spam/promotions.
+                </div>
               </div>
 
               <div class="text-white/60 text-xs">
@@ -302,24 +318,22 @@
               <span class="text-xs px-3 py-1 rounded-full bg-fuchsia-400/10 border border-fuchsia-200/20 text-fuchsia-50">Owner only</span>
             </div>
 
-            <div class="mt-4 grid md:grid-cols-3 gap-3">
-              <input id="inviteStaffEmail" class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-300/40" placeholder="Staff email"/>
-              <select id="inviteStaffRole" class="rounded-2xl border border-white/15 bg-white/10 text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-300/40">
-                <option value="staff">Staff</option>
-                <option value="owner">Owner (use carefully)</option>
-              </select>
-              <button id="inviteBtn" class="px-4 py-3 rounded-2xl bg-fuchsia-500 text-white font-semibold hover:bg-fuchsia-600 transition">
-                Invite / Add by Email
-              </button>
+            <div class="mt-4 space-y-3">
+              <input id="inviteStaffName" class="w-full rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-300/40" placeholder="Staff name"/>
+              <div class="grid md:grid-cols-3 gap-3">
+                <input id="inviteStaffEmail" class="rounded-2xl border border-white/15 bg-white/10 text-white placeholder:text-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-300/40" placeholder="Staff email"/>
+                <select id="inviteStaffRole" class="rounded-2xl border border-white/15 bg-white/10 text-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-300/40">
+                  <option value="staff">Staff</option>
+                  <option value="owner">Owner (use carefully)</option>
+                </select>
+                <button id="inviteBtn" class="px-4 py-3 rounded-2xl bg-fuchsia-500 text-white font-semibold hover:bg-fuchsia-600 transition">
+                  Invite / Add by Email
+                </button>
+              </div>
             </div>
 
             <div class="mt-3 text-white/60 text-xs">
-              Enter email → app creates invite. When they login with that email + school code, they are added to staff.
-            </div>
-
-            <div class="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div class="text-white/70 text-xs">Your UID</div>
-              <div id="myUidBox" class="text-white font-mono text-sm mt-1"></div>
+              Enter email → app creates an invite. Staff can sign in using <b>Staff Email Link</b> or Email+Password, then invite is auto-accepted.
             </div>
 
             <div class="mt-4 rounded-2xl border border-white/10 bg-white/5">
@@ -560,6 +574,7 @@ const staffPassword = document.getElementById("staffPassword");
 const staffLoginBtn = document.getElementById("staffLoginBtn");
 const staffCreateBtn = document.getElementById("staffCreateBtn");
 const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
+const sendStaffEmailLinkBtn = document.getElementById("sendStaffEmailLinkBtn");
 
 const schoolCodesList = document.getElementById("schoolCodesList");
 const recentSchoolsSection = document.getElementById("recentSchoolsSection");
@@ -586,12 +601,12 @@ const clearParentSelectionBtn = document.getElementById("clearParentSelectionBtn
 /* Staff */
 const staffRoleLine = document.getElementById("staffRoleLine");
 const ownerPanel = document.getElementById("ownerPanel");
-const myUidBox = document.getElementById("myUidBox");
 const staffList = document.getElementById("staffList");
 
 const inviteStaffEmail = document.getElementById("inviteStaffEmail");
 const inviteStaffRole = document.getElementById("inviteStaffRole");
 const inviteBtn = document.getElementById("inviteBtn");
+const inviteStaffName = document.getElementById("inviteStaffName");
 
 const schoolName = document.getElementById("schoolName");
 const className  = document.getElementById("className");
@@ -638,8 +653,9 @@ const announcementMessage = document.getElementById("announcementMessage");
 
 /* State */
 const LS_RECENT_SCHOOLS = "PRESCHOOL_RECENT_SCHOOLS";
-const LS_PARENT_EMAIL = "PRESCHOOL_PARENT_EMAIL_FOR_LINK";
+const LS_EMAIL_FOR_LINK = "PRESCHOOL_EMAIL_FOR_LINK";
 const LS_AUTH_INTENT = "PRESCHOOL_AUTH_INTENT"; // "staff" | "parent"
+const LS_LINK_MODE = "PRESCHOOL_LINK_MODE";     // "staff" | "parent"
 
 let APP = {
   schoolCode: null,
@@ -807,14 +823,12 @@ async function ensureSchoolExistsAndOwnerClaim(){
 
   const ownerEmail = normalizeEmail(AUTH.currentUser?.email);
 
-  // 1) create school meta
   await metaRef.set({
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     ownerUid: uid,
     ownerEmail: ownerEmail
   });
 
-  // 2) create owner staff doc
   await metaRef.collection("staff").doc(uid).set({
     uid,
     email: ownerEmail,
@@ -822,7 +836,6 @@ async function ensureSchoolExistsAndOwnerClaim(){
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge:true });
 
-  // 3) default settings
   await metaRef.collection("settings").doc("main").set({
     schoolName: "",
     className: "",
@@ -866,11 +879,14 @@ async function getMyRoleInSchool(){
 async function createStaffInviteByEmail(){
   if(!APP.isOwner) return setStatus("Owner only.", "err");
   const email = normalizeEmail(inviteStaffEmail.value||"");
+  const name = (inviteStaffName.value||"").trim();
   const role = inviteStaffRole.value || "staff";
   if(!email || !email.includes("@")) return setStatus("Enter valid email.", "err");
+  if(!name) return setStatus("Enter staff name.", "err");
 
   await schoolRef().collection("staffInvites").doc(email).set({
     email,
+    name,
     role,
     invitedByUid: AUTH.currentUser.uid,
     invitedByEmail: normalizeEmail(AUTH.currentUser.email),
@@ -878,7 +894,8 @@ async function createStaffInviteByEmail(){
   }, { merge:true });
 
   inviteStaffEmail.value = "";
-  setStatus("Invite created. Ask staff to login with that email + this school code.", "ok");
+  inviteStaffName.value = "";
+  setStatus("Invite created. Staff can sign in using Staff Email Link (recommended).", "ok");
 }
 
 async function acceptInviteIfAny(){
@@ -896,6 +913,7 @@ async function acceptInviteIfAny(){
   await schoolRef().collection("staff").doc(AUTH.currentUser.uid).set({
     uid: AUTH.currentUser.uid,
     email,
+    name: data.name || "",
     role,
     addedFromInvite: true,
     invitedAt: data.createdAt || null,
@@ -925,7 +943,11 @@ function bindSchoolDataForStaff(){
   APP.unsub.push(
     sref.collection("staff").onSnapshot((snap)=>{
       APP.staffRoster = snap.docs.map(d=>({ id:d.id, ...d.data() }))
-        .sort((a,b)=>String(a.email||a.id).localeCompare(String(b.email||b.id)));
+        .sort((a,b)=>{
+          const aKey = a.name || a.email || a.id;
+          const bKey = b.name || b.email || b.id;
+          return String(aKey).localeCompare(String(bKey));
+        });
       renderStaffRoster();
     }, onSnapError)
   );
@@ -1082,7 +1104,6 @@ function renderStaffRoster(){
     return;
   }
   ownerPanel.classList.remove("hidden");
-  myUidBox.textContent = AUTH.currentUser?.uid || "-";
 
   const list = (APP.staffRoster||[]);
   if(!list.length){
@@ -1091,10 +1112,13 @@ function renderStaffRoster(){
   }
   staffList.innerHTML = list.map(s=>{
     const isOwner = s.role === "owner";
+    const displayName = s.name || s.email || "(no name)";
+    const secondaryInfo = s.name ? s.email : "";
     return `
       <div class="p-3 border-b border-white/5 flex items-center justify-between gap-3">
         <div>
-          <div class="text-white font-semibold">${esc(s.email||"(no email)")}</div>
+          <div class="text-white font-semibold">${esc(displayName)}</div>
+          ${secondaryInfo ? `<div class="text-white/60 text-xs">${esc(secondaryInfo)}</div>` : ""}
           <div class="text-white/60 text-xs">${isOwner ? "Owner" : "Staff"}</div>
         </div>
         ${isOwner ? "" : `
@@ -1317,7 +1341,6 @@ async function linkParentToChild(){
   emails.push(g.email);
   await cRef.set({ guardianEmails: emails }, { merge:true });
 
-  // parent access index (for announcements/settings read)
   await schoolRef().collection("parentAccess").doc(normalizeEmail(g.email)).set({
     email: normalizeEmail(g.email),
     addedAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -1498,32 +1521,37 @@ async function clearToday(){
   setStatus("Cleared.", "ok");
 }
 
-/* Email Link Auth (Parent) */
-async function sendParentEmailLink(){
+/* Email Link Auth (Parent + Staff) */
+async function sendEmailLink(mode){
   if(!guardHosted()) return;
 
-  const code = (parentSchoolCode.value||"").trim().toUpperCase();
-  const email = normalizeEmail(parentEmail.value||"");
+  const isStaff = mode === "staff";
+  const code = (isStaff ? (staffSchoolCode.value||"") : (parentSchoolCode.value||"")).trim().toUpperCase();
+  const email = normalizeEmail(isStaff ? (staffEmail.value||"") : (parentEmail.value||""));
   if(!code) return setStatus("Enter school code.", "err");
   if(!email || !email.includes("@")) return setStatus("Enter valid email.", "err");
 
-  setAuthIntent("parent");
+  setAuthIntent(isStaff ? "staff" : "parent");
   setSchoolCode(code);
 
-  const url = continueUrl({ school: code, mode: "parent" });
+  // Store email & mode for completion
+  localStorage.setItem(LS_EMAIL_FOR_LINK, email);
+  localStorage.setItem(LS_LINK_MODE, isStaff ? "staff" : "parent");
+
+  const url = continueUrl({ school: code, mode: isStaff ? "staff" : "parent" });
   const actionCodeSettings = { url, handleCodeInApp: true };
 
-  sendEmailLinkBtn.disabled = true;
-  const oldText = sendEmailLinkBtn.textContent;
-  sendEmailLinkBtn.textContent = "Sending...";
+  const btn = isStaff ? sendStaffEmailLinkBtn : sendEmailLinkBtn;
+  btn.disabled = true;
+  const oldText = btn.textContent;
+  btn.textContent = "Sending...";
   try{
     await AUTH.sendSignInLinkToEmail(email, actionCodeSettings);
   } finally {
-    sendEmailLinkBtn.disabled = false;
-    sendEmailLinkBtn.textContent = oldText;
+    btn.disabled = false;
+    btn.textContent = oldText;
   }
 
-  localStorage.setItem(LS_PARENT_EMAIL, email);
   emailLinkHint.classList.remove("hidden");
   setStatus("Login link sent. Check inbox + spam/promotions.", "ok");
 }
@@ -1531,18 +1559,23 @@ async function sendParentEmailLink(){
 async function completeEmailLinkIfPresent(){
   if(!AUTH.isSignInWithEmailLink(window.location.href)) return;
 
-  setAuthIntent("parent");
   emailLinkHint.classList.remove("hidden");
+
   const u = new URL(window.location.href);
   const school = (u.searchParams.get("school") || "").trim().toUpperCase();
+  const mode = (u.searchParams.get("mode") || "").trim().toLowerCase(); // staff | parent
   if(school) setSchoolCode(school);
 
-  let email = localStorage.getItem(LS_PARENT_EMAIL);
+  const storedMode = (localStorage.getItem(LS_LINK_MODE) || mode || "parent").toLowerCase();
+  setAuthIntent(storedMode === "staff" ? "staff" : "parent");
+
+  let email = localStorage.getItem(LS_EMAIL_FOR_LINK);
   if(!email) email = normalizeEmail(prompt("Confirm your email to finish login:") || "");
   if(!email) return setStatus("Email is required to finish login.", "err");
 
   await AUTH.signInWithEmailLink(email, window.location.href);
-  localStorage.removeItem(LS_PARENT_EMAIL);
+  localStorage.removeItem(LS_EMAIL_FOR_LINK);
+  localStorage.removeItem(LS_LINK_MODE);
 
   const clean = location.pathname + (APP.schoolCode ? `?school=${encodeURIComponent(APP.schoolCode)}` : "");
   window.history.replaceState({}, document.title, clean);
@@ -1640,7 +1673,7 @@ async function routeAfterAuth(){
     return setStatus("Select role and enter school code to continue.", "info");
   }
 
-  // If staff intent, attempt first-claim + invite accept; do NOT fall back to parent
+  // STAFF intent
   if(APP.authIntent === "staff"){
     await ensureSchoolExistsAndOwnerClaim();
     await acceptInviteIfAny();
@@ -1658,15 +1691,14 @@ async function routeAfterAuth(){
       return;
     }
 
-    // Not staff: keep them on staff flow
     APP.role = null;
     stopListeners();
     showStaffAuth();
-    setStatus("No staff access for this school. Ask the school Owner to invite your email.", "err");
+    setStatus("No staff access for this school. Ask the Owner to invite your email.", "err");
     return;
   }
 
-  // Parent intent
+  // PARENT intent
   APP.role = "parent";
   showParent();
   bindSchoolDataForParent();
@@ -1724,6 +1756,7 @@ pickParentBtn.addEventListener("click", ()=>{ setAuthIntent("parent"); showParen
 backToRole1.addEventListener("click", ()=>{ showRolePick(); });
 backToRole2.addEventListener("click", ()=>{ showRolePick(); });
 
+/* Staff password-based create/login (still supported) */
 staffCreateBtn.addEventListener("click", async ()=>{
   try{
     setAuthIntent("staff");
@@ -1744,7 +1777,7 @@ staffCreateBtn.addEventListener("click", async ()=>{
     console.error(e);
     const msg = String(e?.message||"Error");
     if(msg.toLowerCase().includes("already")){
-      setStatus("This email already has an account. Please click Login instead.", "err");
+      setStatus("This email already has an account. Use Login or Email Link.", "err");
     }else{
       setStatus(msg, "err");
     }
@@ -1784,8 +1817,13 @@ forgotPasswordBtn.addEventListener("click", async ()=>{
   }
 });
 
+/* Staff + Parent Email Link buttons */
+sendStaffEmailLinkBtn.addEventListener("click", async ()=>{
+  try { await sendEmailLink("staff"); }
+  catch(e){ console.error(e); setStatus(e?.message || "Error", "err"); }
+});
 sendEmailLinkBtn.addEventListener("click", async ()=>{
-  try { setAuthIntent("parent"); await sendParentEmailLink(); }
+  try { await sendEmailLink("parent"); }
   catch(e){ console.error(e); setStatus(e?.message || "Error", "err"); }
 });
 
@@ -1816,6 +1854,7 @@ async function boot(){
   const mode = (u.searchParams.get("mode") || "").trim().toLowerCase();
   if(school) setSchoolCode(school);
   if(mode === "parent") setAuthIntent("parent");
+  if(mode === "staff") setAuthIntent("staff");
 
   showRolePick();
   try { await completeEmailLinkIfPresent(); }
